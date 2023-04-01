@@ -1,0 +1,26 @@
+*               text=auto eol=lf
+
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+
+# Js sources
+*.ts            text diff=ts   eol=lf
+*.js            text diff=js   eol=lf
+*.html          text diff=html eol=lf
+
+# Binary
+*.class         binary
+*.dll           binary
+*.ear           binary
+*.jar           binary
+*.so            binary
+*.war           binary
+*.jks           binary
+*.gz            binary
+
+# Media
+*.png           binary
+*.jpg           binary
+*.ico           binary
+*.jpeg          binary
+*.gif           binary
