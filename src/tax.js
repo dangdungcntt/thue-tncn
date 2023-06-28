@@ -16,11 +16,11 @@ export function GetTax(taxSalary, mode = 'year') {
     let tax = 0;
     for (let i = TaxRates.length - 1; i >= 0; i--) {
         let rate = TaxRates[i];
-        rate.min /= divide;
+        const minSalary = rate.min / divide;
 
-        if (taxSalary >= rate.min) {
-            tax += (taxSalary - rate.min) * rate.rate / 100;
-            taxSalary = rate.min;
+        if (taxSalary >= minSalary) {
+            tax += (taxSalary - minSalary) * rate.rate / 100;
+            taxSalary = minSalary;
         }
     }
     return tax;

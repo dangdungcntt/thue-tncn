@@ -105,6 +105,10 @@ const monthlyTaxSalary = computed(() => {
   return Math.max(cTotalSalary.value - (totalReduceSalary.value / 12) - monthlyInsurance.value, 0);
 });
 
+const getTaxRateValue = (taxRate) => {
+  return Math.min((taxRate.max - taxRate.min) / 12 * taxRate.rate / 100, taxRate.rate * (monthlyTaxSalary.value - taxRate.min / 12) / 100)
+}
+
 </script>
 
 <template>
@@ -118,12 +122,12 @@ const monthlyTaxSalary = computed(() => {
             Thu nhập
           </label>
 
-          <div v-for="salaryMode in SalaryModes"
-               :key="salaryMode.value"
+          <div v-for="salaryMode in SalaryModes" :key="salaryMode.value"
                class="form-check form-check-inline ms-2">
 
             <label class="form-check-label">
-              <input v-model="state.salaryMode" :value="salaryMode.value" class="form-check-input" type="radio">
+              <input v-model="state.salaryMode" :value="salaryMode.value" class="form-check-input"
+                     type="radio">
               {{ salaryMode.label }}
             </label>
           </div>
@@ -136,12 +140,12 @@ const monthlyTaxSalary = computed(() => {
         <div class="mb-3">
           <label class="form-label">
             Bảo hiểm
-            <div v-for="insuranceMode in InsuranceModes"
-                 :key="insuranceMode.value"
+            <div v-for="insuranceMode in InsuranceModes" :key="insuranceMode.value"
                  class="form-check form-check-inline ms-2">
 
               <label class="form-check-label">
-                <input v-model="state.insuranceMode" :value="insuranceMode.value" class="form-check-input" type="radio">
+                <input v-model="state.insuranceMode" :value="insuranceMode.value" class="form-check-input"
+                       type="radio">
                 {{ insuranceMode.label }}
               </label>
             </div>
@@ -190,12 +194,12 @@ const monthlyTaxSalary = computed(() => {
           </tr>
           <tr>
             <th>
-              <span v-if="remainingTax > 0">
-                Thuế còn phải đóng (7) = (5) - (6)
-              </span>
+                                <span v-if="remainingTax > 0">
+                                    Thuế còn phải đóng (7) = (5) - (6)
+                                </span>
               <span v-else>
-                Thuế được nhận lại (7) = (6) - (5)
-              </span>
+                                    Thuế được nhận lại (7) = (6) - (5)
+                                </span>
             </th>
             <th class="text-end">{{ formatNumber(Math.abs(remainingTax)) }}</th>
           </tr>
@@ -228,7 +232,11 @@ const monthlyTaxSalary = computed(() => {
             </tr>
             <tr>
               <th>Thuế phải đóng (5)</th>
-              <th class="text-end">{{ formatNumber(GetTax(monthlyTaxSalary)) }}</th>
+              <th class="text-end">{{ formatNumber(GetTax(monthlyTaxSalary, 'month')) }}</th>
+            </tr>
+            <tr>
+              <th>Thực nhận (6) = (1) - (3) - (5)</th>
+              <th class="text-end">{{ formatNumber(cTotalSalary-GetTax(monthlyTaxSalary, 'month') - monthlyInsurance) }}</th>
             </tr>
             </tbody>
           </table>
@@ -246,9 +254,12 @@ const monthlyTaxSalary = computed(() => {
           <tbody>
           <tr v-for="(taxRate, index) in taxRateRows" :key="index">
             <td>{{ index + 1 }}</td>
-            <td>Trên {{ (taxRate.min / _1M) }} <span v-if="taxRate.max">đến {{ (taxRate.max / _1M) }}</span></td>
-            <td>Trên {{ (taxRate.min / 12 / _1M) }} <span v-if="taxRate.max">đến {{ (taxRate.max / 12 / _1M) }}</span></td>
-            <td class="text-center">{{ taxRate.rate }}</td>
+            <td>Trên {{ (taxRate.min / _1M) }} <span v-if="taxRate.max">đến {{ (taxRate.max / _1M) }}</span>
+            </td>
+            <td>Trên {{ (taxRate.min / 12 / _1M) }} <span v-if="taxRate.max">đến {{
+                (taxRate.max / 12 / _1M)
+              }}</span></td>
+            <td class="text-center">{{ taxRate.rate }} <span v-if="showMonthlyTax && getTaxRateValue(taxRate) > 0"><br>~{{ formatNumber(getTaxRateValue(taxRate)) }}</span></td>
           </tr>
           </tbody>
         </table>
