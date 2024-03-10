@@ -1,4 +1,6 @@
-export const TaxRates = [
+import { TaxRate } from "./model";
+
+export const TaxRates: TaxRate[] = [
     { min: 0, rate: 5 },
     { min: 60000000, rate: 10 },
     { min: 120000000, rate: 15 },
@@ -8,7 +10,7 @@ export const TaxRates = [
     { min: 960000000, rate: 35 },
 ];
 
-export function GetTax(taxSalary, mode = 'year') {
+export function GetTax(taxSalary: number, mode = 'year') {
     let divide = 1;
     if (mode === 'month') {
         divide = 12;
