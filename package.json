@@ -13,11 +13,13 @@
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.1.8",
-        "@tailwindcss/postcss": "^4.1.8",
         "@vitejs/plugin-vue": "^5.2.4",
         "maska": "^2.1.11",
         "tailwindcss": "^4.1.8",
         "vite": "^6.3.5",
         "vue-tsc": "^2.2.10"
+    },
+    "overrides": {
+        "vite": "npm:rolldown-vite@latest"
     }
 }
