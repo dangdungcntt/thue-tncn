@@ -223,12 +223,12 @@ const monthlyResultRows = computed(() => {
               </label>
             </template>
           </div>
-          <input class="w-full border px-3 py-1 rounded" v-model="state.totalSalary" v-maska:[maskaOption]
+          <input class="w-full border px-3 py-1 rounded-sm" v-model="state.totalSalary" v-maska:[maskaOption]
             type="text" />
         </div>
         <div class="mb-3">
           <div class="mb-2">Số người phụ thuộc </div>
-          <input class="w-full border px-3 py-1 rounded" v-model="state.numberOfPeople" type="number">
+          <input class="w-full border px-3 py-1 rounded-sm" v-model="state.numberOfPeople" type="number">
         </div>
         <div class="mb-3">
           <div class="mb-2">
@@ -242,12 +242,13 @@ const monthlyResultRows = computed(() => {
               </label>
             </template>
           </div>
-          <input class="w-full border px-3 py-1 rounded" v-model="state.insuranceInput" v-maska:[maskaOption]
+          <input class="w-full border px-3 py-1 rounded-sm" v-model="state.insuranceInput" v-maska:[maskaOption]
             type="text" />
         </div>
         <div class="mb-3">
           <label>Thuế đã khấu trừ</label>
-          <input class="w-full border px-3 py-1 rounded" v-model="state.payedTax" v-maska:[maskaOption] type="text" />
+          <input class="w-full border px-3 py-1 rounded-sm" v-model="state.payedTax" v-maska:[maskaOption]
+            type="text" />
         </div>
         <hr>
         <h4 class="text-2xl font-medium my-2">Kết quả quyết toán thuế cả năm</h4>
@@ -291,14 +292,14 @@ const monthlyResultRows = computed(() => {
               :class="{ 'bg-gray-100': index % 2 == 0 }">
               <td class="border p-2">{{ index + 1 }}</td>
               <td class="border p-2">Trên {{ (taxRate.min / _1M) }} <span v-if="taxRate.max">đến {{ (taxRate.max / _1M)
-                  }}</span>
+              }}</span>
               </td>
               <td class="border p-2">Trên {{ (taxRate.min / 12 / _1M) }} <span v-if="taxRate.max">đến {{
-              (taxRate.max / 12 / _1M)
-            }}</span></td>
+                (taxRate.max / 12 / _1M)
+                  }}</span></td>
               <td class="text-center border p-2">{{ taxRate.rate }} <span
                   v-if="showMonthlyTax && getTaxRateValue(taxRate) > 0"><br>~{{
-              formatNumber(getTaxRateValue(taxRate)) }}</span></td>
+                    formatNumber(getTaxRateValue(taxRate)) }}</span></td>
             </tr>
           </tbody>
         </table>
