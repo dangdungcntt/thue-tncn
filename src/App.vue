@@ -1,19 +1,11 @@
 <script setup lang="ts">
 import { computed, reactive } from "vue";
-import { GetTax, TaxRates } from "./tax";
-import { TaxRate } from "./model";
+import { formatNumber, useTaxCalculator } from "./composable";
+import { TaxConfig2025, TaxConfig2026 } from "./config";
+import { InputForm } from "./model";
+import CompareLabel from "./CompareLabel.vue";
 
 const _1M = 1000000;
-
-const taxRateRows: TaxRate[] = [];
-for (let i = 0; i < TaxRates.length; i++) {
-  taxRateRows.push({
-    min: TaxRates[i].min,
-    rate: TaxRates[i].rate,
-    max: i < TaxRates.length - 1 ? TaxRates[i + 1].min : 0
-  });
-}
-const formatNumber = (number: number) => number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
 const maskaOption = reactive({
   mask: "#,###,###,###,###,###,###",
@@ -29,13 +21,7 @@ const InsuranceModes = [
   { label: 'Tiền đã nộp', value: 'payed' }
 ];
 
-const taxConfig = {
-  selfReduce: 11000000,
-  peopleReduce: 4400000,
-  insuranceRate: 10.5
-};
-
-const state = reactive({
+const state = reactive<InputForm>({
   salaryMode: 'month',
   totalSalary: '',
   numberOfPeople: 0,
@@ -44,170 +30,20 @@ const state = reactive({
   payedTax: ''
 });
 
-const cTotalSalary = computed(() => {
-  return Math.max(Number(state.totalSalary.replace(/,/g, '')), 0);
-});
-
-const cInsuranceInput = computed(() => {
-  return Math.max(Number(state.insuranceInput.replace(/,/g, '')), 0);
-});
-
-const cPayedTax = computed(() => {
-  return Math.max(Number(state.payedTax.replace(/,/g, '')), 0);
-});
-
-
-const totalSalaryOfYear = computed(() => {
-  if (state.salaryMode === 'month') {
-    return cTotalSalary.value * 12;
-  }
-
-  return cTotalSalary.value;
-});
-
-const selfReduceSalary = taxConfig.selfReduce * 12;
-const peopleReduceSalary = computed(() => {
-  return state.numberOfPeople * taxConfig.peopleReduce * 12;
-});
-
-const totalReduceSalary = computed(() => {
-  return selfReduceSalary + peopleReduceSalary.value;
-});
-
-const payedInsurance = computed(() => {
-  if (state.insuranceMode === 'salary') {
-    return Math.round(cInsuranceInput.value * 12 * taxConfig.insuranceRate / 100);
-  }
-  return cInsuranceInput.value;
-});
-
-const taxSalary = computed(() => {
-  return Math.max(totalSalaryOfYear.value - totalReduceSalary.value - payedInsurance.value, 0);
-});
-
-const totalTax = computed(() => {
-  return GetTax(taxSalary.value);
-});
-
-const remainingTax = computed(() => {
-  return totalTax.value - cPayedTax.value;
-});
-
 const showMonthlyTax = computed(() => {
   return state.salaryMode === 'month' && state.insuranceMode == 'salary';
 });
 
-const monthlyInsurance = computed(() => {
-  return Math.round(cInsuranceInput.value * taxConfig.insuranceRate / 100);
-});
-
-const monthlyTaxSalary = computed(() => {
-  return Math.max(cTotalSalary.value - (totalReduceSalary.value / 12) - monthlyInsurance.value, 0);
-});
-
-const getTaxRateValue = (taxRate: TaxRate) => {
-  let currentLevelTaxSalary = (monthlyTaxSalary.value - taxRate.min / 12);
-  if (taxRate.max) {
-    currentLevelTaxSalary = Math.min(
-      (taxRate.max - taxRate.min) / 12,
-      currentLevelTaxSalary
-    )
-  }
-
-  return currentLevelTaxSalary * taxRate.rate / 100;
-}
-
-const resultRows = computed(() => {
-  return [
-    {
-      label: 'Tổng Thu nhập chịu thuế (1)',
-      value: formatNumber(totalSalaryOfYear.value),
-      heading: true,
-    },
-    {
-      label: 'Giảm trừ gia cảnh (2)',
-      value: formatNumber(totalReduceSalary.value),
-      heading: true,
-    },
-    {
-      label: `Bản thân (${formatNumber(taxConfig.selfReduce)}/tháng)`,
-      value: formatNumber(selfReduceSalary),
-      heading: false,
-    },
-    {
-      label: `Người phụ thuộc (${formatNumber(taxConfig.peopleReduce)}/tháng)`,
-      value: formatNumber(peopleReduceSalary.value),
-      heading: false,
-    },
-    {
-      label: 'Bảo hiểm đã đóng (3)',
-      value: formatNumber(payedInsurance.value),
-      heading: true,
-    },
-    {
-      label: 'Tổng thu nhập tính thuế (4) = (1) - (2) - (3)',
-      value: formatNumber(taxSalary.value),
-      heading: true,
-    },
-    {
-      label: 'Tổng thuế phải đóng (5)',
-      value: formatNumber(totalTax.value),
-      heading: true,
-    },
-    {
-      label: 'Thuế đã khấu trừ (6)',
-      value: formatNumber(cPayedTax.value),
-      heading: true,
-    },
-    {
-      label: remainingTax.value > 0 ? 'Thuế còn phải đóng (7) = (5) - (6)' : 'Thuế được nhận lại (7) = (6) - (5)',
-      value: formatNumber(Math.abs(remainingTax.value)),
-      heading: true,
-    },
-  ];
-});
-
-const monthlyResultRows = computed(() => {
-  return [
-    {
-      label: 'Thu nhập (1)',
-      value: formatNumber(cTotalSalary.value),
-      heading: true,
-    },
-    {
-      label: 'Giảm trừ gia cảnh (2)',
-      value: formatNumber(totalReduceSalary.value / 12),
-      heading: true,
-    },
-    {
-      label: 'Bảo hiểm (3)',
-      value: formatNumber(monthlyInsurance.value),
-      heading: true,
-    },
-    {
-      label: 'Thu nhập tính thuế (4) = (1) - (2) - (3)',
-      value: formatNumber(monthlyTaxSalary.value),
-      heading: true,
-    },
-    {
-      label: 'Thuế phải đóng (5)',
-      value: formatNumber(GetTax(monthlyTaxSalary.value, 'month')),
-      heading: true,
-    },
-    {
-      label: 'Thực nhận (6) = (1) - (3) - (5)',
-      value: formatNumber(cTotalSalary.value - GetTax(monthlyTaxSalary.value, 'month') -
-        monthlyInsurance.value),
-      heading: true,
-    },
-  ];
-});
+const { resultRows, monthlyResultRows, taxRateRows, getTaxRateValue } = useTaxCalculator(TaxConfig2025, state);
+const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026 } = useTaxCalculator(TaxConfig2026, state);
 
 </script>
 
 <template>
   <div class="container mx-auto p-4">
     <h1 class="text-center my-4 text-3xl font-medium">Tính thuế TNCN</h1>
+    <div class="text-center my-4">(Cập nhật theo quyết định ngày 17/10/2025
+      của Ủy ban Thường vụ Quốc hội)</div>
     <div class="grid grid-cols-12 gap-5 md:gap-10">
       <div class="col-span-12 md:col-span-7">
         <h4 class="text-2xl font-medium my-2">Thông tin</h4>
@@ -253,11 +89,31 @@ const monthlyResultRows = computed(() => {
         <hr>
         <h4 class="text-2xl font-medium my-2">Kết quả quyết toán thuế cả năm</h4>
         <table class="border border-collapse w-full text-left">
+          <thead>
+            <th class="border p-2"></th>
+            <th class="border p-2 text-center">
+              KQT 2025
+              <div class="text-xs font-normal">Tháng 3/2026</div>
+            </th>
+            <th class="border p-2 text-center">
+              KQT 2026
+              <div class="text-xs font-normal">Tháng 3/2027</div>
+            </th>
+          </thead>
           <tbody>
             <tr v-for="(row, i) in resultRows" :key="i" class="hover:bg-gray-200"
               :class="{ 'bg-gray-100': i % 2 == 0 }">
               <td class="border p-2" :class="{ 'font-semibold': row.heading }">{{ row.label }}</td>
-              <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">{{ row.value }}</td>
+              <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
+                <div v-if="row.compare">&nbsp;</div>
+                {{ row.value }}
+              </td>
+              <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
+                <div v-if="row.compare">
+                  <CompareLabel :left="row.value" :right="resultRows2026[i].value" />
+                </div>
+                {{ resultRows2026[i].value }}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -267,11 +123,32 @@ const monthlyResultRows = computed(() => {
           <hr>
           <h6 class="text-xl font-medium my-2">Thuế thu nhập cá nhân hàng tháng</h6>
           <table class="border border-collapse w-full text-left">
+            <thead>
+              <th class="border p-2"></th>
+              <th class="border p-2 text-center">
+                KQT 2025
+                <div class="text-xs font-normal">Tháng 3/2026</div>
+              </th>
+              <th class="border p-2 text-center">
+                KQT 2026
+                <div class="text-xs font-normal">Tháng 3/2027</div>
+              </th>
+            </thead>
             <tbody>
               <tr v-for="(row, i) in monthlyResultRows" :key="i" class="hover:bg-gray-200"
                 :class="{ 'bg-gray-100': i % 2 == 0 }">
                 <td class="border p-2" :class="{ 'font-semibold': row.heading }">{{ row.label }}</td>
-                <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">{{ row.value }}</td>
+                <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
+                  <div v-if="row.compare">&nbsp;</div>
+                  {{ row.value }}
+                </td>
+                <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
+                  <div v-if="row.compare">
+                    <CompareLabel :left="row.value" :right="monthlyResultRows2026[i].value" />
+                  </div>
+
+                  {{ monthlyResultRows2026[i].value }}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -292,7 +169,7 @@ const monthlyResultRows = computed(() => {
               :class="{ 'bg-gray-100': index % 2 == 0 }">
               <td class="border p-2">{{ index + 1 }}</td>
               <td class="border p-2">Trên {{ (taxRate.min / _1M) }} <span v-if="taxRate.max">đến {{ (taxRate.max / _1M)
-              }}</span>
+                  }}</span>
               </td>
               <td class="border p-2">Trên {{ (taxRate.min / 12 / _1M) }} <span v-if="taxRate.max">đến {{
                 (taxRate.max / 12 / _1M)
