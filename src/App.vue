@@ -44,8 +44,8 @@ const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026 } =
     <h1 class="text-center my-4 text-3xl font-medium">Tính thuế TNCN</h1>
     <div class="text-center my-4">(Cập nhật theo Nghị quyết ngày 17/10/2025
       của Ủy ban Thường vụ Quốc hội)</div>
-    <div class="grid grid-cols-12 gap-5 md:gap-10">
-      <div class="col-span-12 lg:col-span-7">
+    <div class="grid grid-cols-12 gap-5 md:gap-14">
+      <div class="col-span-12 lg:col-span-5">
         <h4 class="text-2xl font-medium my-2">Thông tin</h4>
         <div class="mb-3">
           <div class="mb-2">
@@ -86,44 +86,9 @@ const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026 } =
           <input class="w-full border px-3 py-1 rounded-sm" v-model="state.payedTax" v-maska:[maskaOption]
             type="text" />
         </div>
-        <hr>
-        <h4 class="text-2xl font-medium my-2">Kết quả quyết toán thuế cả năm</h4>
-        <table class="border border-collapse w-full text-left">
-          <thead>
-            <tr>
-              <th class="border p-2"></th>
-              <th class="border p-2 text-center">
-                KQT 2025
-                <div class="text-xs font-normal">Tháng 3/2026</div>
-              </th>
-              <th class="border p-2 text-center">
-                KQT 2026
-                <div class="text-xs font-normal">Tháng 3/2027</div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(row, i) in resultRows" :key="i" class="hover:bg-gray-200"
-              :class="{ 'bg-gray-100': i % 2 == 0 }">
-              <td class="border p-2" :class="{ 'font-semibold': row.heading }">{{ row.label }}</td>
-              <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
-                <div v-if="row.compare">&nbsp;</div>
-                {{ row.value }}
-              </td>
-              <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
-                <div v-if="row.compare">
-                  <CompareLabel :left="row.value" :right="resultRows2026[i].value" :inverse="row.invertCompare" />
-                </div>
-                {{ resultRows2026[i].value }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="col-span-12 lg:col-span-5">
         <template v-if="showMonthlyTax">
-          <hr>
-          <h6 class="text-xl font-medium my-2">Thuế thu nhập cá nhân hàng tháng</h6>
+          <hr class="my-6">
+          <h6 class="text-xl font-medium my-4">Thuế thu nhập cá nhân hàng tháng</h6>
           <table class="border border-collapse w-full text-left">
             <thead>
               <tr>
@@ -158,8 +123,43 @@ const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026 } =
             </tbody>
           </table>
         </template>
-        <hr class="mt-4">
-        <h6 class="text-xl font-medium my-2">Bảng thuế suất thuế thu nhập cá nhân hiện hành:</h6>
+      </div>
+      <div class="col-span-12 lg:col-span-7">
+        <hr class="my-6 lg:hidden">
+        <h4 class="text-2xl font-medium my-4">Kết quả quyết toán thuế cả năm</h4>
+        <table class="border border-collapse w-full text-left">
+          <thead>
+            <tr>
+              <th class="border p-2"></th>
+              <th class="border p-2 text-center">
+                KQT 2025
+                <div class="text-xs font-normal">Tháng 3/2026</div>
+              </th>
+              <th class="border p-2 text-center">
+                KQT 2026
+                <div class="text-xs font-normal">Tháng 3/2027</div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, i) in resultRows" :key="i" class="hover:bg-gray-200"
+              :class="{ 'bg-gray-100': i % 2 == 0 }">
+              <td class="border p-2" :class="{ 'font-semibold': row.heading }">{{ row.label }}</td>
+              <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
+                <div v-if="row.compare">&nbsp;</div>
+                {{ row.value }}
+              </td>
+              <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
+                <div v-if="row.compare">
+                  <CompareLabel :left="row.value" :right="resultRows2026[i].value" :inverse="row.invertCompare" />
+                </div>
+                {{ resultRows2026[i].value }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <hr class="mt-6">
+        <h6 class="text-xl font-medium my-4">Bảng thuế suất thuế thu nhập cá nhân hiện hành:</h6>
         <table class="text-left">
           <thead>
             <tr>

@@ -82,16 +82,15 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<InputForm
                 label: 'Giảm trừ gia cảnh (2)',
                 value: formatNumber(totalReduceSalary.value),
                 heading: true,
+                compare: true,
             },
             {
                 label: 'Bản thân',
                 value: formatNumber(selfReduceSalary),
-                compare: true,
             },
             {
                 label: 'Người phụ thuộc',
                 value: formatNumber(peopleReduceSalary.value),
-                compare: true,
             },
             {
                 label: 'Bảo hiểm đã đóng (3)',
@@ -138,6 +137,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<InputForm
                 label: 'Giảm trừ gia cảnh (2)',
                 value: formatNumber(totalReduceSalary.value / 12),
                 heading: true,
+                compare: true,
             },
             {
                 label: 'Bảo hiểm (3)',
