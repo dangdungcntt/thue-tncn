@@ -42,7 +42,7 @@ const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026 } =
 <template>
   <div class="container mx-auto p-4">
     <h1 class="text-center my-4 text-3xl font-medium">Tính thuế TNCN</h1>
-    <div class="text-center my-4">(Cập nhật theo quyết định ngày 17/10/2025
+    <div class="text-center my-4">(Cập nhật theo Nghị quyết ngày 17/10/2025
       của Ủy ban Thường vụ Quốc hội)</div>
     <div class="grid grid-cols-12 gap-5 md:gap-10">
       <div class="col-span-12 lg:col-span-7">
