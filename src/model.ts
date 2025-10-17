@@ -25,4 +25,5 @@ export type ResultRow = {
     value: string;
     heading?: boolean;
     compare?: boolean;
+    invertCompare?: boolean;
 }

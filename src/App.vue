@@ -45,7 +45,7 @@ const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026 } =
     <div class="text-center my-4">(Cập nhật theo quyết định ngày 17/10/2025
       của Ủy ban Thường vụ Quốc hội)</div>
     <div class="grid grid-cols-12 gap-5 md:gap-10">
-      <div class="col-span-12 md:col-span-7">
+      <div class="col-span-12 lg:col-span-7">
         <h4 class="text-2xl font-medium my-2">Thông tin</h4>
         <div class="mb-3">
           <div class="mb-2">
@@ -90,15 +90,17 @@ const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026 } =
         <h4 class="text-2xl font-medium my-2">Kết quả quyết toán thuế cả năm</h4>
         <table class="border border-collapse w-full text-left">
           <thead>
-            <th class="border p-2"></th>
-            <th class="border p-2 text-center">
-              KQT 2025
-              <div class="text-xs font-normal">Tháng 3/2026</div>
-            </th>
-            <th class="border p-2 text-center">
-              KQT 2026
-              <div class="text-xs font-normal">Tháng 3/2027</div>
-            </th>
+            <tr>
+              <th class="border p-2"></th>
+              <th class="border p-2 text-center">
+                KQT 2025
+                <div class="text-xs font-normal">Tháng 3/2026</div>
+              </th>
+              <th class="border p-2 text-center">
+                KQT 2026
+                <div class="text-xs font-normal">Tháng 3/2027</div>
+              </th>
+            </tr>
           </thead>
           <tbody>
             <tr v-for="(row, i) in resultRows" :key="i" class="hover:bg-gray-200"
@@ -110,7 +112,7 @@ const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026 } =
               </td>
               <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
                 <div v-if="row.compare">
-                  <CompareLabel :left="row.value" :right="resultRows2026[i].value" />
+                  <CompareLabel :left="row.value" :right="resultRows2026[i].value" :inverse="row.invertCompare" />
                 </div>
                 {{ resultRows2026[i].value }}
               </td>
@@ -118,21 +120,23 @@ const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026 } =
           </tbody>
         </table>
       </div>
-      <div class="col-span-12 md:col-span-5">
+      <div class="col-span-12 lg:col-span-5">
         <template v-if="showMonthlyTax">
           <hr>
           <h6 class="text-xl font-medium my-2">Thuế thu nhập cá nhân hàng tháng</h6>
           <table class="border border-collapse w-full text-left">
             <thead>
-              <th class="border p-2"></th>
-              <th class="border p-2 text-center">
-                KQT 2025
-                <div class="text-xs font-normal">Tháng 3/2026</div>
-              </th>
-              <th class="border p-2 text-center">
-                KQT 2026
-                <div class="text-xs font-normal">Tháng 3/2027</div>
-              </th>
+              <tr>
+                <th class="border p-2"></th>
+                <th class="border p-2 text-center">
+                  KQT 2025
+                  <div class="text-xs font-normal">Tháng 3/2026</div>
+                </th>
+                <th class="border p-2 text-center">
+                  KQT 2026
+                  <div class="text-xs font-normal">Tháng 3/2027</div>
+                </th>
+              </tr>
             </thead>
             <tbody>
               <tr v-for="(row, i) in monthlyResultRows" :key="i" class="hover:bg-gray-200"
@@ -144,7 +148,8 @@ const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026 } =
                 </td>
                 <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
                   <div v-if="row.compare">
-                    <CompareLabel :left="row.value" :right="monthlyResultRows2026[i].value" />
+                    <CompareLabel :left="row.value" :right="monthlyResultRows2026[i].value"
+                      :inverse="row.invertCompare" />
                   </div>
 
                   {{ monthlyResultRows2026[i].value }}
@@ -169,7 +174,7 @@ const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026 } =
               :class="{ 'bg-gray-100': index % 2 == 0 }">
               <td class="border p-2">{{ index + 1 }}</td>
               <td class="border p-2">Trên {{ (taxRate.min / _1M) }} <span v-if="taxRate.max">đến {{ (taxRate.max / _1M)
-                  }}</span>
+              }}</span>
               </td>
               <td class="border p-2">Trên {{ (taxRate.min / 12 / _1M) }} <span v-if="taxRate.max">đến {{
                 (taxRate.max / 12 / _1M)

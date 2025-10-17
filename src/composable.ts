@@ -82,7 +82,6 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<InputForm
                 label: 'Giảm trừ gia cảnh (2)',
                 value: formatNumber(totalReduceSalary.value),
                 heading: true,
-                compare: true,
             },
             {
                 label: 'Bản thân',
@@ -104,12 +103,14 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<InputForm
                 value: formatNumber(taxSalary.value),
                 heading: true,
                 compare: true,
+                invertCompare: true,
             },
             {
-                label: 'Tổng thuế phải đóng (5)',
+                label: 'Tổng thuế phải đóng (5) = Thuế suất x (4)',
                 value: formatNumber(totalTax.value),
                 heading: true,
                 compare: true,
+                invertCompare: true,
             },
             {
                 label: 'Thuế đã khấu trừ (6)',
@@ -121,6 +122,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<InputForm
                 value: formatNumber(Math.abs(remainingTax.value)),
                 heading: true,
                 compare: true,
+                invertCompare: true,
             },
         ];
     });
@@ -136,7 +138,6 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<InputForm
                 label: 'Giảm trừ gia cảnh (2)',
                 value: formatNumber(totalReduceSalary.value / 12),
                 heading: true,
-                compare: true,
             },
             {
                 label: 'Bảo hiểm (3)',
@@ -148,12 +149,14 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<InputForm
                 value: formatNumber(monthlyTaxSalary.value),
                 heading: true,
                 compare: true,
+                invertCompare: true,
             },
             {
-                label: 'Thuế phải đóng (5)',
+                label: 'Thuế phải đóng (5) = Thuế suất x (4)',
                 value: formatNumber(getTax(taxConfig.rates, monthlyTaxSalary.value, 'month')),
                 heading: true,
                 compare: true,
+                invertCompare: true,
             },
             {
                 label: 'Thực nhận (6) = (1) - (3) - (5)',
