@@ -3,6 +3,7 @@ import { TaxConfig } from "./model";
 export const TaxConfig2025: TaxConfig = {
     selfReduce: 11000000,
     peopleReduce: 4400000,
+    maxInsuranePerMonth: 46800000,
     insuranceRate: 10.5,
     rates: [
         { min: 0, rate: 5 },
@@ -18,6 +19,7 @@ export const TaxConfig2025: TaxConfig = {
 export const TaxConfig2026: TaxConfig = {
     selfReduce: 15500000,
     peopleReduce: 6200000,
+    maxInsuranePerMonth: 46800000,
     insuranceRate: 10.5,
     rates: [
         { min: 0, rate: 5 },

@@ -8,16 +8,25 @@ export type TaxConfig = {
     selfReduce: number
     peopleReduce: number
     insuranceRate: number
+    maxInsuranePerMonth: number
     rates: TaxRate[]
 }
 
-export type InputForm = {
+export type TaxInputForm = {
     salaryMode: string;
     totalSalary: string;
     numberOfPeople: number;
     insuranceMode: 'salary' | 'payed',
     insuranceInput: string,
     payedTax: string
+}
+
+export type IncomeInputForm = {
+    salaryMode: 'gross' | 'net';
+    totalSalary: string;
+    numberOfPeople: number;
+    insuranceMode: 'full' | 'custom',
+    insuranceInput: string,
 }
 
 export type ResultRow = {
