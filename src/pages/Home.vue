@@ -36,7 +36,7 @@ const showMonthlyTax = computed(() => {
 });
 
 const { resultRows, monthlyResultRows, taxRateRows, getTaxRateValue } = useTaxCalculator(TaxConfig2025, state);
-const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026, taxRateRows: taxRateRows2026 } = useTaxCalculator(TaxConfig2026, state);
+const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026, taxRateRows: taxRateRows2026, getTaxRateValue: getTaxRateValue2026 } = useTaxCalculator(TaxConfig2026, state);
 
 const convertedtaxRateRows2026 = computed(() => {
   const results: TaxRate[] = [];
@@ -185,7 +185,7 @@ const convertedtaxRateRows2026 = computed(() => {
     </div>
     <div>
       <hr class="mt-6">
-      <h6 class="text-xl font-medium my-4">Bảng thuế suất thuế thu nhập cá nhân:
+      <h6 class="text-xl font-medium my-4">Bảng thuế suất thuế thu nhập cá nhân
       </h6>
       <div class="relative overflow-x-auto rounded-base border border-default">
         <table class="text-left w-full min-w-[992px]">
@@ -249,8 +249,8 @@ const convertedtaxRateRows2026 = computed(() => {
                 </td>
                 <td class="text-center p-2" :rowspan="convertedtaxRateRows2026[index + 1].rate == 0 ? 2 : 1">{{
                   convertedtaxRateRows2026[index].rate }} <span
-                    v-if="showMonthlyTax && getTaxRateValue(convertedtaxRateRows2026[index]) > 0"><br>~{{
-                      formatNumber(getTaxRateValue(convertedtaxRateRows2026[index])) }}</span></td>
+                    v-if="showMonthlyTax && getTaxRateValue2026(convertedtaxRateRows2026[index]) > 0"><br>~{{
+                      formatNumber(getTaxRateValue2026(convertedtaxRateRows2026[index])) }}</span></td>
               </template>
             </tr>
           </tbody>
