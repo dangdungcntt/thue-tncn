@@ -202,7 +202,7 @@ const convertedtaxRateRows2026 = computed(() => {
               <th class="border-r p-2">Bậc</th>
               <th class="border-r p-2">Phần TNTT/năm <br>(triệu đồng)</th>
               <th class="border-r p-2">Phần TNTT/tháng <br>(triệu đồng)</th>
-              <th class="p-2">Thuế suất (%)</th>
+              <th class="p-2">Thuế suất <br>(%)</th>
             </tr>
           </thead>
           <tbody>
@@ -218,7 +218,7 @@ const convertedtaxRateRows2026 = computed(() => {
               <td class="border-r p-2 capitalize">
                 <span v-if="taxRate.min">Trên {{ (taxRate.min / 12 / _1M) }}</span> <span v-if="taxRate.max">đến {{
                   (taxRate.max / 12 / _1M)
-                }}</span>
+                  }}</span>
               </td>
               <td class="text-center border-r p-2">{{ taxRate.rate }} <span
                   v-if="showMonthlyTax && getTaxRateValue(taxRate) > 0"><br>~{{
