@@ -23,11 +23,9 @@ export const TaxConfig2026: TaxConfig = {
     insuranceRate: 10.5,
     rates: [
         { min: 0, rate: 5 },
-        { min: 60000000, rate: 10 },
-        { min: 120000000, rate: 15 },
-        { min: 216000000, rate: 20 },
-        { min: 384000000, rate: 25 },
-        { min: 624000000, rate: 30 },
-        { min: 960000000, rate: 35 },
+        { min: 120000000, rate: 10 },
+        { min: 360000000, rate: 20 },
+        { min: 720000000, rate: 30 },
+        { min: 1200000000, rate: 35 },
     ]
 };

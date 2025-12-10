@@ -2,7 +2,7 @@
 import { computed, reactive } from "vue";
 import { useTaxCalculator } from "../composables/tax";
 import { TaxConfig2025, TaxConfig2026 } from "../config";
-import { TaxInputForm } from "../model";
+import { TaxInputForm, TaxRate } from "../model";
 import CompareLabel from "../components/CompareLabel.vue";
 import { formatNumber } from "../libs/utils";
 
@@ -36,15 +36,37 @@ const showMonthlyTax = computed(() => {
 });
 
 const { resultRows, monthlyResultRows, taxRateRows, getTaxRateValue } = useTaxCalculator(TaxConfig2025, state);
-const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026 } = useTaxCalculator(TaxConfig2026, state);
+const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026, taxRateRows: taxRateRows2026 } = useTaxCalculator(TaxConfig2026, state);
+
+const convertedtaxRateRows2026 = computed(() => {
+  const results: TaxRate[] = [];
+
+  taxRateRows2026.value.forEach((taxRate, index) => {
+    results.push(taxRate);
+    if (index == 0 || index == 1) {
+      results.push({
+        min: 0,
+        max: 0,
+        rate: 0
+      });
+    }
+  });
+
+  results.push({
+    min: 0,
+    max: 0,
+    rate: 0
+  });
+
+  return results;
+})
 
 </script>
 
 <template>
   <div class="container mx-auto p-4">
     <h1 class="text-center my-4 text-3xl font-medium">Tính thuế TNCN</h1>
-    <div class="text-center my-4">(Cập nhật theo Nghị quyết ngày 17/10/2025
-      của Ủy ban Thường vụ Quốc hội)</div>
+    <div class="text-center my-4">(Cập nhật theo Nghị quyết 110/2025/UBTVQH15 và Luật thuế TNCN sửa đổi 2025)</div>
     <div class="grid grid-cols-12 gap-5 md:gap-14">
       <div class="col-span-12 lg:col-span-5">
         <h4 class="text-2xl font-medium my-2">Thông tin</h4>
@@ -159,32 +181,77 @@ const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026 } =
             </tr>
           </tbody>
         </table>
-        <hr class="mt-6">
-        <h6 class="text-xl font-medium my-4">Bảng thuế suất thuế thu nhập cá nhân hiện hành:</h6>
-        <table class="text-left">
-          <thead>
+      </div>
+    </div>
+    <div>
+      <hr class="mt-6">
+      <h6 class="text-xl font-medium my-4">Bảng thuế suất thuế thu nhập cá nhân:
+      </h6>
+      <div class="relative overflow-x-auto rounded-base border border-default">
+        <table class="text-left w-full min-w-[992px]">
+          <thead class="bg-neutral-secondary-soft border-b border-default text-center">
+            <tr class="border-b border-default">
+              <th class="p-2 border-r" colspan="4">Hiện hành</th>
+              <th class="p-2" colspan="4">Luật thuế TNCN sửa đổi 2025</th>
+            </tr>
             <tr>
-              <th class="border p-2">Bậc thuế</th>
-              <th class="border p-2">Phần thu nhập tính thuế/năm (triệu đồng)</th>
-              <th class="border p-2">Phần thu nhập tính thuế/tháng (triệu đồng)</th>
-              <th class="border p-2">Thuế suất (%)</th>
+              <th class="border-r p-2">Bậc</th>
+              <th class="border-r p-2">Phần TNTT/năm <br>(triệu đồng)</th>
+              <th class="border-r p-2">Phần TNTT/tháng <br>(triệu đồng)</th>
+              <th class="border-r p-2">Thuế suất <br>(%)</th>
+              <th class="border-r p-2">Bậc</th>
+              <th class="border-r p-2">Phần TNTT/năm <br>(triệu đồng)</th>
+              <th class="border-r p-2">Phần TNTT/tháng <br>(triệu đồng)</th>
+              <th class="p-2">Thuế suất (%)</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(taxRate, index) in taxRateRows" :key="index" class="hover:bg-gray-200"
-              :class="{ 'bg-gray-100': index % 2 == 0 }">
-              <td class="border p-2">{{ index + 1 }}</td>
-              <td class="border p-2">Trên {{ (taxRate.min / _1M) }} <span v-if="taxRate.max">đến {{
-                (taxRate.max /
-                  _1M)
-                  }}</span>
+            <tr v-for="(taxRate, index) in taxRateRows" :key="index"
+              class="hover:bg-gray-200 odd:bg-neutral-primary even:bg-neutral-secondary-soft border-b border-default">
+              <td class="border-r p-2 text-center">{{ index + 1 }}</td>
+              <td class="border-r p-2 capitalize">
+                <span v-if="taxRate.min">Trên {{ (taxRate.min / _1M) }}</span> <span v-if="taxRate.max">đến {{
+                  (taxRate.max /
+                    _1M)
+                }}</span>
               </td>
-              <td class="border p-2">Trên {{ (taxRate.min / 12 / _1M) }} <span v-if="taxRate.max">đến {{
-                (taxRate.max / 12 / _1M)
-                  }}</span></td>
-              <td class="text-center border p-2">{{ taxRate.rate }} <span
+              <td class="border-r p-2 capitalize">
+                <span v-if="taxRate.min">Trên {{ (taxRate.min / 12 / _1M) }}</span> <span v-if="taxRate.max">đến {{
+                  (taxRate.max / 12 / _1M)
+                }}</span>
+              </td>
+              <td class="text-center border-r p-2">{{ taxRate.rate }} <span
                   v-if="showMonthlyTax && getTaxRateValue(taxRate) > 0"><br>~{{
                     formatNumber(getTaxRateValue(taxRate)) }}</span></td>
+
+              <template v-if="convertedtaxRateRows2026[index].rate != 0">
+                <td class="border-r p-2 text-center" :rowspan="convertedtaxRateRows2026[index + 1].rate == 0 ? 2 : 1">{{
+                  (index + 1)
+                  -
+                  (Math.floor((index + 1) / 2.4)) }}
+                </td>
+                <td class="border-r p-2 capitalize" :rowspan="convertedtaxRateRows2026[index + 1].rate == 0 ? 2 : 1">
+                  <span v-if="convertedtaxRateRows2026[index].min">
+                    Trên {{
+                      formatNumber(convertedtaxRateRows2026[index].min / _1M) }}
+                  </span> <span v-if="convertedtaxRateRows2026[index].max">đến {{
+                    formatNumber(convertedtaxRateRows2026[index].max /
+                      _1M)
+                  }}</span>
+                </td>
+                <td class="border-r p-2 capitalize" :rowspan="convertedtaxRateRows2026[index + 1].rate == 0 ? 2 : 1">
+                  <span v-if="convertedtaxRateRows2026[index].min">Trên {{
+                    (convertedtaxRateRows2026[index].min / 12 / _1M) }}</span> <span
+                    v-if="convertedtaxRateRows2026[index].max">đến
+                    {{
+                      formatNumber(convertedtaxRateRows2026[index].max / 12 / _1M)
+                    }}</span>
+                </td>
+                <td class="text-center p-2" :rowspan="convertedtaxRateRows2026[index + 1].rate == 0 ? 2 : 1">{{
+                  convertedtaxRateRows2026[index].rate }} <span
+                    v-if="showMonthlyTax && getTaxRateValue(convertedtaxRateRows2026[index]) > 0"><br>~{{
+                      formatNumber(getTaxRateValue(convertedtaxRateRows2026[index])) }}</span></td>
+              </template>
             </tr>
           </tbody>
         </table>
