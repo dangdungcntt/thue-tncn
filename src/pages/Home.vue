@@ -218,7 +218,7 @@ const convertedtaxRateRows2026 = computed(() => {
               <td class="border-r p-2 capitalize">
                 <span v-if="taxRate.min">Trên {{ (taxRate.min / 12 / _1M) }}</span> <span v-if="taxRate.max">đến {{
                   (taxRate.max / 12 / _1M)
-                  }}</span>
+                }}</span>
               </td>
               <td class="text-center border-r p-2">{{ taxRate.rate }} <span
                   v-if="showMonthlyTax && getTaxRateValue(taxRate) > 0"><br>~{{
@@ -235,7 +235,7 @@ const convertedtaxRateRows2026 = computed(() => {
                     Trên {{
                       formatNumber(convertedtaxRateRows2026[index].min / _1M) }}
                   </span> <span v-if="convertedtaxRateRows2026[index].max">đến {{
-                    formatNumber(convertedtaxRateRows2026[index].max /
+                    formatNumber(convertedtaxRateRows2026[index].max! /
                       _1M)
                   }}</span>
                 </td>
@@ -244,7 +244,7 @@ const convertedtaxRateRows2026 = computed(() => {
                     (convertedtaxRateRows2026[index].min / 12 / _1M) }}</span> <span
                     v-if="convertedtaxRateRows2026[index].max">đến
                     {{
-                      formatNumber(convertedtaxRateRows2026[index].max / 12 / _1M)
+                      formatNumber(convertedtaxRateRows2026[index].max! / 12 / _1M)
                     }}</span>
                 </td>
                 <td class="text-center p-2" :rowspan="convertedtaxRateRows2026[index + 1].rate == 0 ? 2 : 1">{{
