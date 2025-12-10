@@ -61,6 +61,10 @@ const convertedtaxRateRows2026 = computed(() => {
   return results;
 })
 
+function getRowSpan(index: number) {
+  return convertedtaxRateRows2026.value[index + 1].rate == 0 ? 2 : 1
+}
+
 </script>
 
 <template>
@@ -225,12 +229,12 @@ const convertedtaxRateRows2026 = computed(() => {
                     formatNumber(getTaxRateValue(taxRate)) }}</span></td>
 
               <template v-if="convertedtaxRateRows2026[index].rate != 0">
-                <td class="border-r p-2 text-center" :rowspan="convertedtaxRateRows2026[index + 1].rate == 0 ? 2 : 1">{{
+                <td class="border-r p-2 text-center" :rowspan="getRowSpan(index)">{{
                   (index + 1)
                   -
                   (Math.floor((index + 1) / 2.4)) }}
                 </td>
-                <td class="border-r p-2 capitalize" :rowspan="convertedtaxRateRows2026[index + 1].rate == 0 ? 2 : 1">
+                <td class="border-r p-2 capitalize" :rowspan="getRowSpan(index)">
                   <span v-if="convertedtaxRateRows2026[index].min">
                     Trên {{
                       formatNumber(convertedtaxRateRows2026[index].min / _1M) }}
@@ -239,7 +243,7 @@ const convertedtaxRateRows2026 = computed(() => {
                       _1M)
                   }}</span>
                 </td>
-                <td class="border-r p-2 capitalize" :rowspan="convertedtaxRateRows2026[index + 1].rate == 0 ? 2 : 1">
+                <td class="border-r p-2 capitalize" :rowspan="getRowSpan(index)">
                   <span v-if="convertedtaxRateRows2026[index].min">Trên {{
                     (convertedtaxRateRows2026[index].min / 12 / _1M) }}</span> <span
                     v-if="convertedtaxRateRows2026[index].max">đến
@@ -247,7 +251,7 @@ const convertedtaxRateRows2026 = computed(() => {
                       formatNumber(convertedtaxRateRows2026[index].max! / 12 / _1M)
                     }}</span>
                 </td>
-                <td class="text-center p-2" :rowspan="convertedtaxRateRows2026[index + 1].rate == 0 ? 2 : 1">{{
+                <td class="text-center p-2" :rowspan="getRowSpan(index)">{{
                   convertedtaxRateRows2026[index].rate }} <span
                     v-if="showMonthlyTax && getTaxRateValue2026(convertedtaxRateRows2026[index]) > 0"><br>~{{
                       formatNumber(getTaxRateValue2026(convertedtaxRateRows2026[index])) }}</span></td>

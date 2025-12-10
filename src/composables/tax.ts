@@ -122,7 +122,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
                 value: formatNumber(Math.abs(remainingTax.value)),
                 heading: true,
                 compare: true,
-                invertCompare: true,
+                invertCompare: remainingTax.value > 0,
             },
         ];
     });
