@@ -1,6 +1,6 @@
 import { computed, Reactive } from "vue";
 import { ResultRow, TaxConfig, TaxRate, IncomeInputForm } from "../model";
-import { formatNumber, getTax } from "../libs/utils";
+import { formatNumber, getTotalTax } from "../libs/utils";
 
 export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<IncomeInputForm>) {
     const cSalaryInput = computed(() => {
@@ -39,7 +39,7 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
     });
 
     const netSalary = computed(() => {
-        return grossSalary.value - getTax(taxConfig.rates, monthlyTaxSalary.value, 'month') -
+        return grossSalary.value - getTotalTax(taxConfig.rates, monthlyTaxSalary.value, 'month') -
             monthlyInsurance.value
     });
 
@@ -70,7 +70,7 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
             },
             {
                 label: 'Thuế phải đóng (5) = Thuế suất x (4)',
-                value: formatNumber(getTax(taxConfig.rates, monthlyTaxSalary.value, 'month')),
+                value: formatNumber(getTotalTax(taxConfig.rates, monthlyTaxSalary.value, 'month')),
                 heading: true,
                 compare: true,
                 invertCompare: true,

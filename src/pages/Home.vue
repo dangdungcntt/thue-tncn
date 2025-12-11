@@ -1,17 +1,11 @@
 <script setup lang="ts">
 import { computed, reactive } from "vue";
-import { useTaxCalculator } from "../composables/tax";
+import { useTaxCalculator, useTaxRateRows } from "../composables/tax";
 import { TaxConfig2025, TaxConfig2026 } from "../config";
-import { TaxInputForm, TaxRate } from "../model";
+import { TaxInputForm, TaxRateRow } from "../model";
 import CompareLabel from "../components/CompareLabel.vue";
-import { formatNumber } from "../libs/utils";
-
-const _1M = 1000000;
-
-const maskaOption = reactive({
-  mask: "#,###,###,###,###,###,###",
-  reversed: true
-});
+import TaxRateRowElement from "../components/TaxRateRowElement.vue";
+import InputCurrency from "../components/InputCurrency.vue";
 
 const SalaryModes = [
   { label: 'Theo tháng', value: 'month' },
@@ -35,34 +29,32 @@ const showMonthlyTax = computed(() => {
   return state.salaryMode === 'month' && state.insuranceMode == 'salary';
 });
 
-const { resultRows, monthlyResultRows, taxRateRows, getTaxRateValue } = useTaxCalculator(TaxConfig2025, state);
-const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026, taxRateRows: taxRateRows2026, getTaxRateValue: getTaxRateValue2026 } = useTaxCalculator(TaxConfig2026, state);
+const { resultRows, monthlyResultRows, monthlyTaxSalary } = useTaxCalculator(TaxConfig2025, state);
+const { resultRows: resultRows2026, monthlyResultRows: monthlyResultRows2026, monthlyTaxSalary: monthlyTaxSalary2026 } = useTaxCalculator(TaxConfig2026, state);
+const { taxRateRows } = useTaxRateRows(TaxConfig2025, monthlyTaxSalary);
+const { taxRateRows: taxRateRows2026 } = useTaxRateRows(TaxConfig2026, monthlyTaxSalary2026);
 
 const convertedtaxRateRows2026 = computed(() => {
-  const results: TaxRate[] = [];
+  const results: TaxRateRow[] = [];
 
   taxRateRows2026.value.forEach((taxRate, index) => {
     results.push(taxRate);
-    if (index == 0 || index == 1) {
+    if (index <= 1 || index == taxRateRows2026.value.length - 1) {
       results.push({
-        min: 0,
-        max: 0,
-        rate: 0
+        taxRate: {
+          min: 0,
+          max: 0,
+          rate: 0
+        }
       });
     }
-  });
-
-  results.push({
-    min: 0,
-    max: 0,
-    rate: 0
   });
 
   return results;
 })
 
 function getRowSpan(index: number) {
-  return convertedtaxRateRows2026.value[index + 1].rate == 0 ? 2 : 1
+  return convertedtaxRateRows2026.value[index + 1].taxRate.rate == 0 ? 2 : 1
 }
 
 </script>
@@ -86,8 +78,7 @@ function getRowSpan(index: number) {
               </label>
             </template>
           </div>
-          <input class="w-full border px-3 py-1 rounded-sm" v-model="state.totalSalary" v-maska:[maskaOption]
-            type="text" />
+          <InputCurrency v-model="state.totalSalary" />
         </div>
         <div class="mb-3">
           <div class="mb-2">Số người phụ thuộc </div>
@@ -105,13 +96,11 @@ function getRowSpan(index: number) {
               </label>
             </template>
           </div>
-          <input class="w-full border px-3 py-1 rounded-sm" v-model="state.insuranceInput" v-maska:[maskaOption]
-            type="text" />
+          <InputCurrency v-model="state.insuranceInput" />
         </div>
         <div class="mb-3">
           <label>Thuế đã khấu trừ</label>
-          <input class="w-full border px-3 py-1 rounded-sm" v-model="state.payedTax" v-maska:[maskaOption]
-            type="text" />
+          <InputCurrency v-model="state.payedTax" />
         </div>
         <template v-if="showMonthlyTax">
           <hr class="my-6">
@@ -210,51 +199,13 @@ function getRowSpan(index: number) {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(taxRate, index) in taxRateRows" :key="index"
+            <tr v-for="(taxRateRow, index) in taxRateRows" :key="index"
               class="hover:bg-gray-200 odd:bg-neutral-primary even:bg-neutral-secondary-soft border-b border-default">
-              <td class="border-r p-2 text-center">{{ index + 1 }}</td>
-              <td class="border-r p-2 capitalize">
-                <span v-if="taxRate.min">Trên {{ (taxRate.min / _1M) }}</span> <span v-if="taxRate.max">đến {{
-                  (taxRate.max /
-                    _1M)
-                }}</span>
-              </td>
-              <td class="border-r p-2 capitalize">
-                <span v-if="taxRate.min">Trên {{ (taxRate.min / 12 / _1M) }}</span> <span v-if="taxRate.max">đến {{
-                  (taxRate.max / 12 / _1M)
-                }}</span>
-              </td>
-              <td class="text-center border-r p-2">{{ taxRate.rate }} <span
-                  v-if="showMonthlyTax && getTaxRateValue(taxRate) > 0"><br>~{{
-                    formatNumber(getTaxRateValue(taxRate)) }}</span></td>
+              <TaxRateRowElement :tax-rate-row="taxRateRow" :rowspan="1" :level="index + 1" />
 
-              <template v-if="convertedtaxRateRows2026[index].rate != 0">
-                <td class="border-r p-2 text-center" :rowspan="getRowSpan(index)">{{
-                  (index + 1)
-                  -
-                  (Math.floor((index + 1) / 2.4)) }}
-                </td>
-                <td class="border-r p-2 capitalize" :rowspan="getRowSpan(index)">
-                  <span v-if="convertedtaxRateRows2026[index].min">
-                    Trên {{
-                      formatNumber(convertedtaxRateRows2026[index].min / _1M) }}
-                  </span> <span v-if="convertedtaxRateRows2026[index].max">đến {{
-                    formatNumber(convertedtaxRateRows2026[index].max! /
-                      _1M)
-                  }}</span>
-                </td>
-                <td class="border-r p-2 capitalize" :rowspan="getRowSpan(index)">
-                  <span v-if="convertedtaxRateRows2026[index].min">Trên {{
-                    (convertedtaxRateRows2026[index].min / 12 / _1M) }}</span> <span
-                    v-if="convertedtaxRateRows2026[index].max">đến
-                    {{
-                      formatNumber(convertedtaxRateRows2026[index].max! / 12 / _1M)
-                    }}</span>
-                </td>
-                <td class="text-center p-2" :rowspan="getRowSpan(index)">{{
-                  convertedtaxRateRows2026[index].rate }} <span
-                    v-if="showMonthlyTax && getTaxRateValue2026(convertedtaxRateRows2026[index]) > 0"><br>~{{
-                      formatNumber(getTaxRateValue2026(convertedtaxRateRows2026[index])) }}</span></td>
+              <template v-if="convertedtaxRateRows2026[index].taxRate.rate != 0">
+                <TaxRateRowElement :tax-rate-row="convertedtaxRateRows2026[index]" :rowspan="getRowSpan(index)"
+                  :level="(index + 1) - Math.floor((index + 1) / 2.4)" />
               </template>
             </tr>
           </tbody>

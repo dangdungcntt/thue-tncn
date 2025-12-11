@@ -1,6 +1,6 @@
 import { TaxRate } from "../model";
 
-export function getTax(rates: TaxRate[], taxSalary: number, mode = 'year') {
+export function getTotalTax(rates: TaxRate[], taxSalary: number, mode: 'month' | 'year' = 'year') {
     let divide = 1;
     if (mode === 'month') {
         divide = 12;
@@ -18,6 +18,17 @@ export function getTax(rates: TaxRate[], taxSalary: number, mode = 'year') {
     return tax;
 }
 
+export function getTaxRateValue(taxRate: TaxRate, monthlyTaxSalary: number) {
+    let currentLevelTaxSalary = (monthlyTaxSalary - taxRate.min / 12);
+    if (taxRate.max) {
+        currentLevelTaxSalary = Math.min(
+            (taxRate.max - taxRate.min) / 12,
+            currentLevelTaxSalary
+        )
+    }
+
+    return currentLevelTaxSalary * taxRate.rate / 100;
+}
 
 export function formatNumber(number: number) {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")

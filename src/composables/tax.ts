@@ -1,6 +1,6 @@
-import { computed, Reactive } from "vue";
-import { TaxInputForm, ResultRow, TaxConfig, TaxRate } from "../model";
-import { formatNumber, getTax } from "../libs/utils";
+import { computed, MaybeRefOrGetter, Reactive, toValue } from "vue";
+import { TaxInputForm, ResultRow, TaxConfig, TaxRateRow } from "../model";
+import { formatNumber, getTaxRateValue, getTotalTax } from "../libs/utils";
 
 export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputForm>) {
     const cTotalSalary = computed(() => {
@@ -44,7 +44,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
     });
 
     const totalTax = computed(() => {
-        return getTax(taxConfig.rates, taxSalary.value);
+        return getTotalTax(taxConfig.rates, taxSalary.value, 'year');
     });
 
     const remainingTax = computed(() => {
@@ -56,21 +56,11 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
     });
 
     const monthlyTaxSalary = computed(() => {
+        if (state.salaryMode !== 'month' || state.insuranceMode != 'salary') {
+            return 0;
+        }
         return Math.max(cTotalSalary.value - (totalReduceSalary.value / 12) - monthlyInsurance.value, 0);
     });
-
-    const getTaxRateValue = (taxRate: TaxRate) => {
-        let currentLevelTaxSalary = (monthlyTaxSalary.value - taxRate.min / 12);
-        if (taxRate.max) {
-            currentLevelTaxSalary = Math.min(
-                (taxRate.max - taxRate.min) / 12,
-                currentLevelTaxSalary
-            )
-        }
-
-        return currentLevelTaxSalary * taxRate.rate / 100;
-    }
-
 
     const resultRows = computed<ResultRow[]>(() => {
         return [
@@ -128,6 +118,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
     });
 
     const monthlyResultRows = computed<ResultRow[]>(() => {
+        const monthlyTax = getTotalTax(taxConfig.rates, monthlyTaxSalary.value, 'month');
         return [
             {
                 label: 'Thu nhập (1)',
@@ -154,31 +145,18 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
             },
             {
                 label: 'Thuế phải đóng (5) = Thuế suất x (4)',
-                value: formatNumber(getTax(taxConfig.rates, monthlyTaxSalary.value, 'month')),
+                value: formatNumber(monthlyTax),
                 heading: true,
                 compare: true,
                 invertCompare: true,
             },
             {
                 label: 'Thực nhận (6) = (1) - (3) - (5)',
-                value: formatNumber(cTotalSalary.value - getTax(taxConfig.rates, monthlyTaxSalary.value, 'month') -
-                    monthlyInsurance.value),
+                value: formatNumber(cTotalSalary.value - monthlyTax - monthlyInsurance.value),
                 heading: true,
                 compare: true,
             },
         ];
-    });
-
-    const taxRateRows = computed(() => {
-        const rows: TaxRate[] = []
-        for (let i = 0; i < taxConfig.rates.length; i++) {
-            rows.push({
-                min: taxConfig.rates[i].min,
-                rate: taxConfig.rates[i].rate,
-                max: i < taxConfig.rates.length - 1 ? taxConfig.rates[i + 1].min : 0
-            });
-        }
-        return rows;
     });
 
     return {
@@ -195,10 +173,32 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
         remainingTax,
         monthlyInsurance,
         monthlyTaxSalary,
-        getTaxRateValue,
         resultRows,
         monthlyResultRows,
-        taxRateRows
     }
 }
 
+
+export function useTaxRateRows(taxConfig: TaxConfig, monthlyTaxSalary: MaybeRefOrGetter<number>) {
+    const taxRateRows = computed(() => {
+        const rows: TaxRateRow[] = []
+        const mTaxSalary = toValue(monthlyTaxSalary);
+
+        for (let i = 0; i < taxConfig.rates.length; i++) {
+            const rateWithMax = {
+                min: taxConfig.rates[i].min,
+                rate: taxConfig.rates[i].rate,
+                max: i < taxConfig.rates.length - 1 ? taxConfig.rates[i + 1].min : 0
+            };
+            rows.push({
+                taxRate: rateWithMax,
+                monthlyTaxValue: getTaxRateValue(rateWithMax, mTaxSalary)
+            });
+        }
+        return rows;
+    });
+
+    return {
+        taxRateRows
+    }
+}

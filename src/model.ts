@@ -4,6 +4,11 @@ export interface TaxRate {
     rate: number
 }
 
+export interface TaxRateRow {
+    taxRate: TaxRate
+    monthlyTaxValue?: number
+}
+
 export type TaxConfig = {
     selfReduce: number
     peopleReduce: number
