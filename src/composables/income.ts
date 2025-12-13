@@ -7,40 +7,77 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
         return Math.max(Number(state.totalSalary.replace(/,/g, '')), 0);
     });
 
-    const grossSalary = computed(() => {
-        if (state.salaryMode === 'gross') {
-            return cSalaryInput.value;
-        }
-        return 0; //TODO: Calculate gross from net
-    });
-
     const cInsuranceInput = computed(() => {
         return Math.max(Number(state.insuranceInput.replace(/,/g, '')), 0);
     });
 
-    const monthlyInsurance = computed(() => {
-        if (state.insuranceMode === 'full') {
-            return Math.round(Math.min(cSalaryInput.value, taxConfig.maxInsuranePerMonth) * taxConfig.insuranceRate / 100);
-        }
-        return Math.round(cInsuranceInput.value * taxConfig.insuranceRate / 100);
-    });
-
-    const selfReduceSalary = taxConfig.selfReduce;
     const peopleReduceSalary = computed(() => {
-        return state.numberOfPeople * taxConfig.peopleReduce;
+        return state.numberOfPeople * taxConfig.monthlyPeopleReduce;
     });
 
     const totalReduceSalary = computed(() => {
-        return selfReduceSalary + peopleReduceSalary.value;
+        return taxConfig.monthlySelfReduce + peopleReduceSalary.value;
+    });
+
+    const quickLookUpTable: Record<number, {
+        quickDeduction: number,
+        taxRate: TaxRate,
+    }> = {}
+
+    let s = 0;
+    taxConfig.rates.forEach((taxRate, index) => {
+        if (index > 0) {
+            s += (taxRate.min - taxConfig.rates[index - 1].min) / 12 * taxConfig.rates[index - 1].rate / 100
+        }
+        quickLookUpTable[index] = {
+            quickDeduction: taxRate.min / 12 * (taxRate.rate / 100) - s,
+            taxRate: taxRate
+        }
+    })
+
+    const grossSalary = computed(() => {
+        if (state.salaryMode === 'gross') {
+            return cSalaryInput.value;
+        }
+        const netSalary = cSalaryInput.value;
+        for (let i = 0; i < taxConfig.rates.length; i++) {
+            const lookupItem = quickLookUpTable[i];
+            const maxInsurane = (taxConfig.maxMonthlySocialInsuraneSalary * taxConfig.socialInsuranceRate / 100);
+            const r = lookupItem.taxRate.rate / 100
+            const q = lookupItem.quickDeduction
+            const D = totalReduceSalary.value
+            let gross = (netSalary - r * (D + maxInsurane) + maxInsurane - q) / (1 - r);
+            let taxableSalary = 0
+            if (gross >= taxConfig.maxMonthlySocialInsuraneSalary) {
+                taxableSalary = gross - maxInsurane - D;
+            } else {
+                gross = 200 * (netSalary - r * D - q) / (179 * (1 - r))
+                if (gross <= taxConfig.maxMonthlySocialInsuraneSalary) {
+                    taxableSalary = (1 - taxConfig.socialInsuranceRate / 100) * gross - D;
+                }
+            }
+
+            if (taxableSalary >= (taxConfig.rates[i].min / 12) && (i == taxConfig.rates.length - 1 || taxableSalary <= (taxConfig.rates[i + 1].min / 12))) {
+                return Math.round(gross)
+            }
+        }
+        return 0;
+    });
+
+    const monthlyInsurance = computed(() => {
+        if (state.insuranceMode === 'full') {
+            return Math.round(Math.min(grossSalary.value, taxConfig.maxMonthlySocialInsuraneSalary) * taxConfig.socialInsuranceRate / 100);
+        }
+        return Math.round(Math.min(cInsuranceInput.value, taxConfig.maxMonthlySocialInsuraneSalary) * taxConfig.socialInsuranceRate / 100);
     });
 
     const monthlyTaxSalary = computed(() => {
-        return Math.max(cSalaryInput.value - totalReduceSalary.value - monthlyInsurance.value, 0);
+        return Math.max(grossSalary.value - totalReduceSalary.value - monthlyInsurance.value, 0);
     });
 
     const netSalary = computed(() => {
-        return grossSalary.value - getTotalTax(taxConfig.rates, monthlyTaxSalary.value, 'month') -
-            monthlyInsurance.value
+        return Math.round(grossSalary.value - getTotalTax(taxConfig.rates, monthlyTaxSalary.value, 'month') -
+            monthlyInsurance.value);
     });
 
     const monthlyResultRows = computed<ResultRow[]>(() => {
@@ -49,6 +86,7 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
                 label: 'Thu nhập - GROSS (1)',
                 value: formatNumber(grossSalary.value),
                 heading: true,
+                compare: state.salaryMode === 'net',
             },
             {
                 label: 'Giảm trừ gia cảnh (2)',
@@ -79,41 +117,15 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
                 label: 'Thực nhận - NET (6) = (1) - (3) - (5)',
                 value: formatNumber(netSalary.value),
                 heading: true,
-                compare: true,
+                compare: state.salaryMode === 'gross',
             },
         ];
     });
 
 
-    const taxRateRows = computed(() => {
-        const rows: TaxRate[] = []
-        for (let i = 0; i < taxConfig.rates.length; i++) {
-            rows.push({
-                min: taxConfig.rates[i].min,
-                rate: taxConfig.rates[i].rate,
-                max: i < taxConfig.rates.length - 1 ? taxConfig.rates[i + 1].min : 0
-            });
-        }
-        return rows;
-    });
-
-    const getTaxRateValue = (taxRate: TaxRate) => {
-        let currentLevelTaxSalary = (0 - taxRate.min / 12);
-        if (taxRate.max) {
-            currentLevelTaxSalary = Math.min(
-                (taxRate.max - taxRate.min) / 12,
-                currentLevelTaxSalary
-            )
-        }
-
-        return currentLevelTaxSalary * taxRate.rate / 100;
-    }
-
     return {
-        cTotalSalary: cSalaryInput,
+        cSalaryInput,
         cInsuranceInput,
         monthlyResultRows,
-        getTaxRateValue,
-        taxRateRows
     }
 }

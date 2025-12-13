@@ -10,11 +10,20 @@ export interface TaxRateRow {
 }
 
 export type TaxConfig = {
-    selfReduce: number
-    peopleReduce: number
-    insuranceRate: number
-    maxInsuranePerMonth: number
+    monthlySelfReduce: number
+    monthlyPeopleReduce: number
+    socialInsuranceRate: number
+    healthInsuranceRate: number
+    employmentInsuranceRate: number
+    maxMonthlySocialInsuraneSalary: number
     rates: TaxRate[]
+    employmentInsuranceFactor: number
+    minMonthlySalaryByZone: {
+        I: number,
+        II: number,
+        III: number,
+        IV: number,
+    }
 }
 
 export type TaxInputForm = {
@@ -22,8 +31,10 @@ export type TaxInputForm = {
     totalSalary: string;
     numberOfPeople: number;
     insuranceMode: 'salary' | 'payed',
+    slaryForInsuranceMode: 'full' | 'custom',
     insuranceInput: string,
     payedTax: string
+    zone: 'I' | 'II' | 'III' | 'IV'
 }
 
 export type IncomeInputForm = {

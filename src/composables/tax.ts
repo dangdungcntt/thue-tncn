@@ -23,18 +23,17 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
         return cTotalSalary.value;
     });
 
-    const selfReduceSalary = taxConfig.selfReduce * 12;
     const peopleReduceSalary = computed(() => {
-        return state.numberOfPeople * taxConfig.peopleReduce * 12;
+        return state.numberOfPeople * taxConfig.monthlyPeopleReduce * 12;
     });
 
     const totalReduceSalary = computed(() => {
-        return selfReduceSalary + peopleReduceSalary.value;
+        return taxConfig.monthlySelfReduce * 12 + peopleReduceSalary.value;
     });
 
     const payedInsurance = computed(() => {
         if (state.insuranceMode === 'salary') {
-            return Math.round(cInsuranceInput.value * 12 * taxConfig.insuranceRate / 100);
+            return Math.round(cInsuranceInput.value * 12 * (taxConfig.socialInsuranceRate + taxConfig.healthInsuranceRate + taxConfig.employmentInsuranceRate) / 100);
         }
         return cInsuranceInput.value;
     });
@@ -51,8 +50,34 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
         return totalTax.value - cPayedTax.value;
     });
 
+    const monthlySocialInsuranceSalary = computed(() => {
+        if (state.slaryForInsuranceMode == 'custom') {
+            return cInsuranceInput.value
+        }
+        return Math.min(taxConfig.maxMonthlySocialInsuraneSalary, cTotalSalary.value);
+    });
+
+    const monthlySocialInsurance = computed(() => {
+        return Math.round(monthlySocialInsuranceSalary.value * taxConfig.socialInsuranceRate / 100);
+    });
+
+    const monthlyHealthInsurance = computed(() => {
+        return Math.round(monthlySocialInsuranceSalary.value * taxConfig.healthInsuranceRate / 100);
+    });
+
+    const monthlyEmploymentInsuranceSalary = computed(() => {
+        if (state.slaryForInsuranceMode == 'custom') {
+            return cInsuranceInput.value
+        }
+        return Math.min(taxConfig.employmentInsuranceFactor * taxConfig.minMonthlySalaryByZone[state.zone], cTotalSalary.value);
+    });
+
+    const monthlyEmploymentInsurance = computed(() => {
+        return Math.round(monthlyEmploymentInsuranceSalary.value * taxConfig.employmentInsuranceRate / 100);
+    });
+
     const monthlyInsurance = computed(() => {
-        return Math.round(cInsuranceInput.value * taxConfig.insuranceRate / 100);
+        return monthlySocialInsurance.value + monthlyHealthInsurance.value + monthlyEmploymentInsurance.value;
     });
 
     const monthlyTaxSalary = computed(() => {
@@ -77,7 +102,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
             },
             {
                 label: 'Bản thân',
-                value: formatNumber(selfReduceSalary),
+                value: formatNumber(taxConfig.monthlySelfReduce * 12),
             },
             {
                 label: 'Người phụ thuộc',
@@ -132,9 +157,29 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
                 compare: true,
             },
             {
+                label: 'Bản thân',
+                value: formatNumber(taxConfig.monthlySelfReduce),
+            },
+            {
+                label: 'Người phụ thuộc',
+                value: formatNumber(peopleReduceSalary.value / 12),
+            },
+            {
                 label: 'Bảo hiểm (3)',
                 value: formatNumber(monthlyInsurance.value),
                 heading: true,
+            },
+            {
+                label: `BHXH (${taxConfig.socialInsuranceRate}%)`,
+                value: formatNumber(monthlySocialInsurance.value),
+            },
+            {
+                label: `BHYT (${taxConfig.healthInsuranceRate}%)`,
+                value: formatNumber(monthlyHealthInsurance.value),
+            },
+            {
+                label: `BHTN (${taxConfig.employmentInsuranceRate}%)`,
+                value: formatNumber(monthlyEmploymentInsurance.value),
             },
             {
                 label: 'Thu nhập tính thuế (4) = (1) - (2) - (3)',
@@ -152,7 +197,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
             },
             {
                 label: 'Thực nhận (6) = (1) - (3) - (5)',
-                value: formatNumber(cTotalSalary.value - monthlyTax - monthlyInsurance.value),
+                value: formatNumber(cTotalSalary.value - monthlyTax - monthlySocialInsurance.value),
                 heading: true,
                 compare: true,
             },
@@ -160,18 +205,6 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
     });
 
     return {
-        cTotalSalary,
-        cInsuranceInput,
-        cPayedTax,
-        totalSalaryOfYear,
-        selfReduceSalary,
-        peopleReduceSalary,
-        totalReduceSalary,
-        payedInsurance,
-        taxSalary,
-        totalTax,
-        remainingTax,
-        monthlyInsurance,
         monthlyTaxSalary,
         resultRows,
         monthlyResultRows,

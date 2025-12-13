@@ -4,7 +4,7 @@ import GrossNet from './pages/Income.vue'
 
 const routes = [
     { path: '/', component: Home },
-    { path: '/tinh-luong', component: GrossNet },
+    { path: '/tinh-luong-gross-net', component: GrossNet },
 ]
 
 export const router = createRouter({
