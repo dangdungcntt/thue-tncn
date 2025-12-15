@@ -1,18 +1,19 @@
 import { computed, MaybeRefOrGetter, Reactive, toValue } from "vue";
 import { TaxInputForm, ResultRow, TaxConfig, TaxRateRow } from "../model";
 import { formatNumber, getTaxRateValue, getTotalTax } from "../libs/utils";
+import { useConstrainedRounding } from "./rounding";
 
 export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputForm>) {
     const cTotalSalary = computed(() => {
-        return Math.max(Number(state.totalSalary.replace(/,/g, '')), 0);
+        return Math.round(Math.max(Number(state.totalSalary.replace(/,/g, '')), 0));
     });
 
     const cInsuranceInput = computed(() => {
-        return Math.max(Number(state.insuranceInput.replace(/,/g, '')), 0);
+        return Math.round(Math.max(Number(state.insuranceInput.replace(/,/g, '')), 0));
     });
 
     const cPayedTax = computed(() => {
-        return Math.max(Number(state.payedTax.replace(/,/g, '')), 0);
+        return Math.round(Math.max(Number(state.payedTax.replace(/,/g, '')), 0));
     });
 
     const totalSalaryOfYear = computed(() => {
@@ -57,14 +58,6 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
         return Math.min(taxConfig.maxMonthlySocialInsuraneSalary, cTotalSalary.value);
     });
 
-    const monthlySocialInsurance = computed(() => {
-        return Math.round(monthlySocialInsuranceSalary.value * taxConfig.socialInsuranceRate / 100);
-    });
-
-    const monthlyHealthInsurance = computed(() => {
-        return Math.round(monthlySocialInsuranceSalary.value * taxConfig.healthInsuranceRate / 100);
-    });
-
     const monthlyEmploymentInsuranceSalary = computed(() => {
         if (state.slaryForInsuranceMode == 'custom') {
             return cInsuranceInput.value
@@ -72,19 +65,25 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
         return Math.min(taxConfig.employmentInsuranceFactor * taxConfig.minMonthlySalaryByZone[state.zone], cTotalSalary.value);
     });
 
-    const monthlyEmploymentInsurance = computed(() => {
-        return Math.round(monthlyEmploymentInsuranceSalary.value * taxConfig.employmentInsuranceRate / 100);
-    });
-
     const monthlyInsurance = computed(() => {
-        return monthlySocialInsurance.value + monthlyHealthInsurance.value + monthlyEmploymentInsurance.value;
-    });
+        const { roundedItems, roundedTotal } = useConstrainedRounding([
+            monthlySocialInsuranceSalary.value * taxConfig.socialInsuranceRate / 100,
+            monthlySocialInsuranceSalary.value * taxConfig.healthInsuranceRate / 100,
+            monthlyEmploymentInsuranceSalary.value * taxConfig.employmentInsuranceRate / 100,
+        ])
+        return {
+            socialInsurance: roundedItems[0],
+            healthInsurance: roundedItems[1],
+            employmentInsurance: roundedItems[2],
+            total: roundedTotal,
+        }
+    })
 
     const monthlyTaxSalary = computed(() => {
         if (state.salaryMode !== 'month' || state.insuranceMode != 'salary') {
             return 0;
         }
-        return Math.max(cTotalSalary.value - (totalReduceSalary.value / 12) - monthlyInsurance.value, 0);
+        return Math.max(cTotalSalary.value - (totalReduceSalary.value / 12) - monthlyInsurance.value.total, 0);
     });
 
     const resultRows = computed<ResultRow[]>(() => {
@@ -143,7 +142,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
     });
 
     const monthlyResultRows = computed<ResultRow[]>(() => {
-        const monthlyTax = getTotalTax(taxConfig.rates, monthlyTaxSalary.value, 'month');
+        const monthlyTax = Math.ceil(getTotalTax(taxConfig.rates, monthlyTaxSalary.value, 'month'));
         return [
             {
                 label: 'Thu nhập (1)',
@@ -166,20 +165,20 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
             },
             {
                 label: 'Bảo hiểm (3)',
-                value: formatNumber(monthlyInsurance.value),
+                value: formatNumber(monthlyInsurance.value.total),
                 heading: true,
             },
             {
                 label: `BHXH (${taxConfig.socialInsuranceRate}%)`,
-                value: formatNumber(monthlySocialInsurance.value),
+                value: formatNumber(monthlyInsurance.value.socialInsurance),
             },
             {
                 label: `BHYT (${taxConfig.healthInsuranceRate}%)`,
-                value: formatNumber(monthlyHealthInsurance.value),
+                value: formatNumber(monthlyInsurance.value.healthInsurance),
             },
             {
                 label: `BHTN (${taxConfig.employmentInsuranceRate}%)`,
-                value: formatNumber(monthlyEmploymentInsurance.value),
+                value: formatNumber(monthlyInsurance.value.employmentInsurance),
             },
             {
                 label: 'Thu nhập tính thuế (4) = (1) - (2) - (3)',
@@ -197,7 +196,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
             },
             {
                 label: 'Thực nhận (6) = (1) - (3) - (5)',
-                value: formatNumber(cTotalSalary.value - monthlyTax - monthlyInsurance.value),
+                value: formatNumber(cTotalSalary.value - monthlyTax - monthlyInsurance.value.total),
                 heading: true,
                 compare: true,
             },
