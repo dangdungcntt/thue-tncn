@@ -197,7 +197,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
             },
             {
                 label: 'Thực nhận (6) = (1) - (3) - (5)',
-                value: formatNumber(cTotalSalary.value - monthlyTax - monthlySocialInsurance.value),
+                value: formatNumber(cTotalSalary.value - monthlyTax - monthlyInsurance.value),
                 heading: true,
                 compare: true,
             },
