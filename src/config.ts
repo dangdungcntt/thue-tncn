@@ -1,8 +1,8 @@
 import type { TaxConfig } from "./model";
 
 export const TaxConfig2025: TaxConfig = {
-    monthlySelfReduce: 11000000,
-    monthlyPeopleReduce: 4400000,
+    monthlySelfDeduction: 11000000,
+    monthlyDependentDeduction: 4400000,
     healthInsurancePercent: 1.5,
     employmentInsurancePercent: 1,
     socialInsurancePercent: 8,
@@ -26,8 +26,8 @@ export const TaxConfig2025: TaxConfig = {
 };
 
 export const TaxConfig2026: TaxConfig = {
-    monthlySelfReduce: 15500000,
-    monthlyPeopleReduce: 6200000,
+    monthlySelfDeduction: 15500000,
+    monthlyDependentDeduction: 6200000,
     healthInsurancePercent: 1.5,
     employmentInsurancePercent: 1,
     socialInsurancePercent: 8,

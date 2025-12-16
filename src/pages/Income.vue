@@ -16,10 +16,10 @@ const SalaryModes = [
 
 const state = reactive<IncomeInputForm>({
   salaryMode: 'net',
-  totalSalary: '',
-  numberOfPeople: 0,
-  slaryForInsuranceMode: 'full',
-  insuranceInput: '',
+  salaryInput: '',
+  numberOfDependent: 0,
+  insuranceSalaryMode: 'full',
+  insuranceSalaryInput: '',
   zone: 'I',
 });
 
@@ -47,11 +47,11 @@ const { monthlyResultRows: monthlyResultRows2026, monthlyTaxSalary: monthlyTaxSa
             </label>
           </template>
         </div>
-        <InputCurrency v-model="state.totalSalary" />
+        <InputCurrency v-model="state.salaryInput" />
       </div>
       <div>
         <div class="mb-2">Số người phụ thuộc </div>
-        <input class="w-full border px-3 py-1 rounded-sm" v-model="state.numberOfPeople" type="number">
+        <input class="w-full border px-3 py-1 rounded-sm" v-model="state.numberOfDependent" type="number">
       </div>
       <div>
         <div class="mb-2">
@@ -60,12 +60,12 @@ const { monthlyResultRows: monthlyResultRows2026, monthlyTaxSalary: monthlyTaxSa
           </label>
           <template v-for="mode in SalaryInsuranceModes" :key="mode.value">
             <label class="ml-2 mr-3">
-              <input v-model="state.slaryForInsuranceMode" :value="mode.value" class="form-check-input" type="radio">
+              <input v-model="state.insuranceSalaryMode" :value="mode.value" class="form-check-input" type="radio">
               {{ mode.label }}
             </label>
           </template>
         </div>
-        <InputCurrency v-if="state.slaryForInsuranceMode === 'custom'" v-model="state.insuranceInput" />
+        <InputCurrency v-if="state.insuranceSalaryMode === 'custom'" v-model="state.insuranceSalaryInput" />
       </div>
       <div>
         <label>

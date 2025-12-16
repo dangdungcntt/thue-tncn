@@ -4,32 +4,32 @@ import { formatNumber, getTaxLevelValue, getTotalTax } from "../libs/utils";
 import { useConstrainedCeiling } from "./rounding";
 
 export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputForm>) {
-    const cTotalSalary = computed(() => {
-        return Math.round(Math.max(Number(state.totalSalary.replace(/,/g, '')), 0));
+    const cSalaryInput = computed(() => {
+        return Math.round(Math.max(Number(state.salaryInput.replace(/,/g, '')), 0));
     });
 
     const cInsuranceInput = computed(() => {
         return Math.round(Math.max(Number(state.insuranceInput.replace(/,/g, '')), 0));
     });
 
-    const cPayedTax = computed(() => {
-        return Math.round(Math.max(Number(state.payedTax.replace(/,/g, '')), 0));
+    const cPayedTaxInput = computed(() => {
+        return Math.round(Math.max(Number(state.payedTaxInput.replace(/,/g, '')), 0));
     });
 
     const totalSalaryOfYear = computed(() => {
         if (state.salaryMode === 'month') {
-            return cTotalSalary.value * 12;
+            return cSalaryInput.value * 12;
         }
 
-        return cTotalSalary.value;
+        return cSalaryInput.value;
     });
 
-    const peopleReduceSalary = computed(() => {
-        return Math.max(0, state.numberOfPeople) * taxConfig.monthlyPeopleReduce * 12;
+    const dependentDeduction = computed(() => {
+        return Math.max(0, state.numberOfDependent) * taxConfig.monthlyDependentDeduction * 12;
     });
 
-    const totalReduceSalary = computed(() => {
-        return taxConfig.monthlySelfReduce * 12 + peopleReduceSalary.value;
+    const totalDeduction = computed(() => {
+        return taxConfig.monthlySelfDeduction * 12 + dependentDeduction.value;
     });
 
     const payedInsurance = computed(() => {
@@ -40,7 +40,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
     });
 
     const taxSalary = computed(() => {
-        return Math.max(totalSalaryOfYear.value - totalReduceSalary.value - payedInsurance.value, 0);
+        return Math.max(totalSalaryOfYear.value - totalDeduction.value - payedInsurance.value, 0);
     });
 
     const totalTax = computed(() => {
@@ -48,21 +48,21 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
     });
 
     const remainingTax = computed(() => {
-        return totalTax.value - cPayedTax.value;
+        return totalTax.value - cPayedTaxInput.value;
     });
 
     const monthlySocialInsuranceSalary = computed(() => {
-        if (state.slaryForInsuranceMode == 'custom') {
+        if (state.insuranceSlaryMode == 'custom') {
             return cInsuranceInput.value
         }
-        return Math.min(taxConfig.maxMonthlySocialInsuraneSalary, cTotalSalary.value);
+        return Math.min(taxConfig.maxMonthlySocialInsuraneSalary, cSalaryInput.value);
     });
 
     const monthlyEmploymentInsuranceSalary = computed(() => {
-        if (state.slaryForInsuranceMode == 'custom') {
+        if (state.insuranceSlaryMode == 'custom') {
             return cInsuranceInput.value
         }
-        return Math.min(taxConfig.employmentInsuranceFactor * taxConfig.minMonthlySalaryByZone[state.zone], cTotalSalary.value);
+        return Math.min(taxConfig.employmentInsuranceFactor * taxConfig.minMonthlySalaryByZone[state.zone], cSalaryInput.value);
     });
 
     const monthlyInsurance = computed(() => {
@@ -83,7 +83,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
         if (state.salaryMode !== 'month' || state.insuranceMode != 'salary') {
             return 0;
         }
-        return Math.max(cTotalSalary.value - (totalReduceSalary.value / 12) - monthlyInsurance.value.total, 0);
+        return Math.max(cSalaryInput.value - (totalDeduction.value / 12) - monthlyInsurance.value.total, 0);
     });
 
     const resultRows = computed<ResultRow[]>(() => {
@@ -95,17 +95,17 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
             },
             {
                 label: 'Giảm trừ gia cảnh (2)',
-                value: formatNumber(totalReduceSalary.value),
+                value: formatNumber(totalDeduction.value),
                 heading: true,
                 compare: true,
             },
             {
                 label: 'Bản thân',
-                value: formatNumber(taxConfig.monthlySelfReduce * 12),
+                value: formatNumber(taxConfig.monthlySelfDeduction * 12),
             },
             {
                 label: 'Người phụ thuộc',
-                value: formatNumber(peopleReduceSalary.value),
+                value: formatNumber(dependentDeduction.value),
             },
             {
                 label: 'Bảo hiểm đã đóng (3)',
@@ -128,7 +128,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
             },
             {
                 label: 'Thuế đã khấu trừ (6)',
-                value: formatNumber(cPayedTax.value),
+                value: formatNumber(cPayedTaxInput.value),
                 heading: true,
             },
             {
@@ -148,22 +148,22 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
         return [
             {
                 label: 'Thu nhập - GROSS (1)',
-                value: formatNumber(cTotalSalary.value),
+                value: formatNumber(cSalaryInput.value),
                 heading: true,
             },
             {
                 label: 'Giảm trừ gia cảnh (2)',
-                value: formatNumber(totalReduceSalary.value / 12),
+                value: formatNumber(totalDeduction.value / 12),
                 heading: true,
                 compare: true,
             },
             {
                 label: 'Bản thân',
-                value: formatNumber(taxConfig.monthlySelfReduce),
+                value: formatNumber(taxConfig.monthlySelfDeduction),
             },
             {
                 label: 'Người phụ thuộc',
-                value: formatNumber(peopleReduceSalary.value / 12),
+                value: formatNumber(dependentDeduction.value / 12),
             },
             {
                 label: 'Bảo hiểm (3)',
@@ -201,7 +201,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
             },
             {
                 label: 'Thực nhận - NET (6) = (1) - (3) - (5)',
-                value: formatNumber(cTotalSalary.value - monthlyTax - monthlyInsurance.value.total),
+                value: formatNumber(cSalaryInput.value - monthlyTax - monthlyInsurance.value.total),
                 heading: true,
                 compare: true,
             },

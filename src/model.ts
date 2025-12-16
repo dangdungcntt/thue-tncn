@@ -10,8 +10,8 @@ export interface TaxLevelRow {
 }
 
 export type TaxConfig = {
-    monthlySelfReduce: number
-    monthlyPeopleReduce: number
+    monthlySelfDeduction: number
+    monthlyDependentDeduction: number
     socialInsurancePercent: number
     healthInsurancePercent: number
     employmentInsurancePercent: number
@@ -28,21 +28,21 @@ export type TaxConfig = {
 
 export type TaxInputForm = {
     salaryMode: string;
-    totalSalary: string;
-    numberOfPeople: number;
+    salaryInput: string;
+    numberOfDependent: number;
     insuranceMode: 'salary' | 'payed',
-    slaryForInsuranceMode: 'full' | 'custom',
+    insuranceSlaryMode: 'full' | 'custom',
     insuranceInput: string,
-    payedTax: string
+    payedTaxInput: string
     zone: 'I' | 'II' | 'III' | 'IV'
 }
 
 export type IncomeInputForm = {
     salaryMode: 'gross' | 'net';
-    totalSalary: string;
-    numberOfPeople: number;
-    slaryForInsuranceMode: 'full' | 'custom',
-    insuranceInput: string,
+    salaryInput: string;
+    numberOfDependent: number;
+    insuranceSalaryMode: 'full' | 'custom',
+    insuranceSalaryInput: string,
     zone: 'I' | 'II' | 'III' | 'IV'
 }
 

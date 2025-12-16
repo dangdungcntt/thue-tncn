@@ -5,19 +5,19 @@ import { useConstrainedCeiling } from "./rounding";
 
 export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<IncomeInputForm>) {
     const cSalaryInput = computed(() => {
-        return Math.max(Number(state.totalSalary.replace(/,/g, '')), 0);
+        return Math.max(Number(state.salaryInput.replace(/,/g, '')), 0);
     });
 
-    const cInsuranceInput = computed(() => {
-        return Math.max(Number(state.insuranceInput.replace(/,/g, '')), 0);
+    const cInsuranceSalaryInput = computed(() => {
+        return Math.max(Number(state.insuranceSalaryInput.replace(/,/g, '')), 0);
     });
 
-    const peopleReduceSalary = computed(() => {
-        return Math.max(0, state.numberOfPeople) * taxConfig.monthlyPeopleReduce;
+    const dependentDeduction = computed(() => {
+        return Math.max(0, state.numberOfDependent) * taxConfig.monthlyDependentDeduction;
     });
 
-    const totalReduceSalary = computed(() => {
-        return taxConfig.monthlySelfReduce + peopleReduceSalary.value;
+    const totalDeduction = computed(() => {
+        return taxConfig.monthlySelfDeduction + dependentDeduction.value;
     });
 
     const quickTaxLookUpTable: Record<number, {
@@ -45,7 +45,7 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
         const targetNet = cSalaryInput.value;
 
         function tuneGross(gross: number, actualInsurance: number) {
-            const net = grossToNet(gross, totalReduceSalary.value, actualInsurance, taxConfig);
+            const net = grossToNet(gross, totalDeduction.value, actualInsurance, taxConfig);
 
             if (Math.ceil(net) != targetNet) {
                 gross += net < targetNet ? 1 : -1
@@ -60,7 +60,7 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
                 }
             },
             {
-                min: minMonthSalary.value, max: totalReduceSalary.value, cal: function (): number {
+                min: minMonthSalary.value, max: totalDeduction.value, cal: function (): number {
                     // N = G - INS
                     // G = N / (1- socialRate - healthRate - empRate)
                     const insuranceRate = (taxConfig.socialInsurancePercent + taxConfig.healthInsurancePercent + taxConfig.employmentInsurancePercent) / 100
@@ -70,7 +70,7 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
                 }
             },
             {
-                min: totalReduceSalary.value, max: taxConfig.maxMonthlySocialInsuraneSalary,
+                min: totalDeduction.value, max: taxConfig.maxMonthlySocialInsuraneSalary,
                 cal: function (): number {
                     for (let i = 0; i < taxConfig.levels.length; i++) {
                         const lookupItem = quickTaxLookUpTable[i]!;
@@ -79,7 +79,7 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
 
                         const r = lookupItem.taxLevel.percent / 100
                         const q = lookupItem.quickDeduction
-                        const D = totalReduceSalary.value
+                        const D = totalDeduction.value
                         // N = G - INS - Tax
                         // TI = G - INS - D
                         // Tax = r * TI - q
@@ -121,7 +121,7 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
                         ]);
                         const r = lookupItem.taxLevel.percent / 100
                         const q = lookupItem.quickDeduction
-                        const D = totalReduceSalary.value
+                        const D = totalDeduction.value
                         // N = G - INS - Tax
                         // TI = G - INS - D
                         // Tax = r * TI - q
@@ -164,8 +164,8 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
     });
 
     const monthlySocialInsuranceSalary = computed(() => {
-        if (state.slaryForInsuranceMode == 'custom') {
-            return cInsuranceInput.value
+        if (state.insuranceSalaryMode == 'custom') {
+            return cInsuranceSalaryInput.value
         }
         if (grossSalary.value <= minMonthSalary.value) {
             return 0
@@ -174,8 +174,8 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
     });
 
     const monthlyEmploymentInsuranceSalary = computed(() => {
-        if (state.slaryForInsuranceMode == 'custom') {
-            return cInsuranceInput.value
+        if (state.insuranceSalaryMode == 'custom') {
+            return cInsuranceSalaryInput.value
         }
         if (grossSalary.value <= minMonthSalary.value) {
             return 0
@@ -198,7 +198,7 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
     });
 
     const monthlyTaxSalary = computed(() => {
-        return Math.max(grossSalary.value - totalReduceSalary.value - monthlyInsurance.value.total, 0);
+        return Math.max(grossSalary.value - totalDeduction.value - monthlyInsurance.value.total, 0);
     });
 
     const netSalary = computed(() => {
@@ -218,17 +218,17 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
             },
             {
                 label: 'Giảm trừ gia cảnh (2)',
-                value: formatNumber(totalReduceSalary.value),
+                value: formatNumber(totalDeduction.value),
                 heading: true,
                 compare: true,
             },
             {
                 label: 'Bản thân',
-                value: formatNumber(taxConfig.monthlySelfReduce),
+                value: formatNumber(taxConfig.monthlySelfDeduction),
             },
             {
                 label: 'Người phụ thuộc',
-                value: formatNumber(peopleReduceSalary.value),
+                value: formatNumber(dependentDeduction.value),
             },
             {
                 label: 'Bảo hiểm (3)',
@@ -276,13 +276,13 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
 
     return {
         cSalaryInput,
-        cInsuranceInput,
+        cInsuranceInput: cInsuranceSalaryInput,
         monthlyTaxSalary,
         monthlyResultRows,
     }
 }
 
-function grossToNet(gross: number, totalReduceSalary: number, insurance: number, taxConfig: TaxConfig) {
-    const monthlyTaxSalary = Math.max(gross - totalReduceSalary - insurance, 0)
+function grossToNet(gross: number, totalDeduction: number, insurance: number, taxConfig: TaxConfig) {
+    const monthlyTaxSalary = Math.max(gross - totalDeduction - insurance, 0)
     return gross - Math.ceil(getTotalTax(taxConfig.levels, monthlyTaxSalary, 'month')) - Math.ceil(insurance);
 }
