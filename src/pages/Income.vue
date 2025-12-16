@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { reactive } from "vue";
-import { useIncomeCalculator } from "../composables/income";
-import { TaxConfig2025, TaxConfig2026 } from "../config";
-import { IncomeInputForm } from "../model";
-import CompareLabel from "../components/CompareLabel.vue";
-import RuleText from "../components/RuleText.vue";
+import { useIncomeCalculator } from "@/composables/income";
+import { TaxConfig2025, TaxConfig2026 } from "@/config";
+import type { IncomeInputForm } from "@/model";
+import CompareLabel from "@/components/CompareLabel.vue";
+import RuleText from "@/components/RuleText.vue";
 
 const maskaOption = reactive({
   mask: "#,###,###,###,###,###,###",
@@ -100,10 +100,10 @@ const { monthlyResultRows: monthlyResultRows2026 } = useIncomeCalculator(TaxConf
             </td>
             <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
               <div v-if="row.compare">
-                <CompareLabel :left="row.value" :right="monthlyResultRows2026[i].value" :inverse="row.invertCompare" />
+                <CompareLabel :left="row.value" :right="monthlyResultRows2026[i]!.value" :inverse="row.invertCompare" />
               </div>
 
-              {{ monthlyResultRows2026[i].value }}
+              {{ monthlyResultRows2026[i]!.value }}
             </td>
           </tr>
         </tbody>

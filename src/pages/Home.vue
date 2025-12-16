@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue";
-import { useTaxCalculator, useTaxRateRows } from "../composables/tax";
-import { TaxConfig2025, TaxConfig2026 } from "../config";
-import { TaxInputForm, TaxRateRow } from "../model";
-import CompareLabel from "../components/CompareLabel.vue";
-import TaxRateRowElement from "../components/TaxRateRowElement.vue";
-import InputCurrency from "../components/InputCurrency.vue";
-import RuleText from "../components/RuleText.vue";
+import { useTaxCalculator, useTaxRateRows } from "@/composables/tax";
+import { TaxConfig2025, TaxConfig2026 } from "@/config";
+import type { TaxInputForm, TaxRateRow } from "@/model";
+import CompareLabel from "@/components/CompareLabel.vue";
+import TaxRateRowElement from "@/components/TaxRateRowElement.vue";
+import InputCurrency from "@/components/InputCurrency.vue";
+import RuleText from "@/components/RuleText.vue";
+import InfoTooltip from "@/components/InfoTooltip.vue";
 
 const SalaryModes = [
   { label: 'Theo tháng', value: 'month' },
@@ -21,7 +22,7 @@ const Zones = ["I", "II", "III", "IV"]
 
 const state = reactive<TaxInputForm>({
   salaryMode: 'month',
-  totalSalary: '',
+  totalSalary: '63000000',
   numberOfPeople: 0,
   insuranceMode: 'salary',
   slaryForInsuranceMode: 'full',
@@ -37,13 +38,13 @@ watch(() => state.salaryMode, () => {
 })
 
 const InsuranceModes = computed(() => {
-  const res = [
-    { label: 'Mức lương đóng bảo hiểm', value: 'salary' },
-  ];
   if (state.salaryMode == 'year') {
-    res.push({ label: 'Tiền đã nộp', value: 'payed' })
+    return [
+      { label: 'Mức đóng', value: 'salary' },
+      { label: 'Tiền đã nộp', value: 'payed' }
+    ];
   }
-  return res;
+  return [];
 });
 
 const showMonthlyTax = computed(() => {
@@ -75,7 +76,7 @@ const convertedtaxRateRows2026 = computed(() => {
 })
 
 function getRowSpan(index: number) {
-  return convertedtaxRateRows2026.value[index + 1].taxRate.rate == 0 ? 2 : 1
+  return convertedtaxRateRows2026.value[index + 1]!.taxRate.rate == 0 ? 2 : 1
 }
 
 </script>
@@ -110,18 +111,19 @@ function getRowSpan(index: number) {
           <label>
             Bảo hiểm
           </label>
-          <template v-for="insuranceMode in InsuranceModes" :key="insuranceMode.value">
+          <template v-if="InsuranceModes.length" v-for="insuranceMode in InsuranceModes" :key="insuranceMode.value">
             <label class="ml-2 mr-3">
               <input v-model="state.insuranceMode" :value="insuranceMode.value" class="form-check-input" type="radio">
               {{ insuranceMode.label }}
             </label>
           </template>
-        </div>
-        <div>
           <label v-if="showMonthlyTax" v-for="mode in SalaryInsuranceModes" :key="mode.value" class="ml-2 mr-3">
             <input v-model="state.slaryForInsuranceMode" :value="mode.value" class="form-check-input" type="radio">
             {{ mode.label }}
           </label>
+        </div>
+        <div>
+
         </div>
         <InputCurrency v-if="!showMonthlyTax || state.slaryForInsuranceMode == 'custom'"
           v-model="state.insuranceInput" />
@@ -129,6 +131,7 @@ function getRowSpan(index: number) {
       <div v-if="showMonthlyTax">
         <label>
           Vùng
+          <InfoTooltip tooltip="Dùng để tính trần BHTN" />
         </label>
         <template v-for="zone in Zones" :key="zone">
           <label class="ml-2 mr-3">
@@ -163,18 +166,24 @@ function getRowSpan(index: number) {
           <tbody>
             <tr v-for="(row, i) in monthlyResultRows" :key="i" class="hover:bg-gray-200"
               :class="{ 'bg-gray-100': i % 2 == 0 }">
-              <td class="border p-2" :class="{ 'font-semibold': row.heading }">{{ row.label }}</td>
+              <td class="border p-2" :class="{ 'font-semibold': row.heading }">
+                {{ row.label }}
+                <InfoTooltip v-if="row.tooltip" :tooltip="row.tooltip" />
+              </td>
               <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
                 <div v-if="row.compare">&nbsp;</div>
+                <InfoTooltip v-if="row.value_tooltip" :tooltip="row.value_tooltip" />
                 {{ row.value }}
               </td>
               <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
                 <div v-if="row.compare">
-                  <CompareLabel :left="row.value" :right="monthlyResultRows2026[i].value"
+                  <CompareLabel :left="row.value" :right="monthlyResultRows2026[i]!.value"
                     :inverse="row.invertCompare" />
                 </div>
 
-                {{ monthlyResultRows2026[i].value }}
+                <InfoTooltip v-if="monthlyResultRows2026[i]!.value_tooltip"
+                  :tooltip="monthlyResultRows2026[i]!.value_tooltip" />
+                {{ monthlyResultRows2026[i]!.value }}
               </td>
             </tr>
           </tbody>
@@ -207,9 +216,9 @@ function getRowSpan(index: number) {
             </td>
             <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
               <div v-if="row.compare">
-                <CompareLabel :left="row.value" :right="resultRows2026[i].value" :inverse="row.invertCompare" />
+                <CompareLabel :left="row.value" :right="resultRows2026[i]!.value" :inverse="row.invertCompare" />
               </div>
-              {{ resultRows2026[i].value }}
+              {{ resultRows2026[i]!.value }}
             </td>
           </tr>
         </tbody>
@@ -243,8 +252,8 @@ function getRowSpan(index: number) {
             class="hover:bg-gray-200 odd:bg-neutral-primary even:bg-neutral-secondary-soft border-b border-default">
             <TaxRateRowElement :tax-rate-row="taxRateRow" :rowspan="1" :level="index + 1" border-right />
 
-            <template v-if="convertedtaxRateRows2026[index].taxRate.rate != 0">
-              <TaxRateRowElement :tax-rate-row="convertedtaxRateRows2026[index]" :rowspan="getRowSpan(index)"
+            <template v-if="convertedtaxRateRows2026[index]!.taxRate.rate != 0">
+              <TaxRateRowElement :tax-rate-row="convertedtaxRateRows2026[index]!" :rowspan="getRowSpan(index)"
                 :level="(index + 1) - Math.floor((index + 1) / 2.4)" />
             </template>
           </tr>

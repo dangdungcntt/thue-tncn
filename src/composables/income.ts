@@ -1,6 +1,6 @@
-import { computed, Reactive } from "vue";
-import { ResultRow, TaxConfig, TaxRate, IncomeInputForm } from "../model";
-import { formatNumber, getTotalTax } from "../libs/utils";
+import { computed, type Reactive } from "vue";
+import type { ResultRow, TaxConfig, TaxRate, IncomeInputForm } from "@/model";
+import { formatNumber, getTotalTax } from "@/libs/utils";
 
 export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<IncomeInputForm>) {
     const cSalaryInput = computed(() => {
@@ -27,7 +27,7 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
     let s = 0;
     taxConfig.rates.forEach((taxRate, index) => {
         if (index > 0) {
-            s += (taxRate.min - taxConfig.rates[index - 1].min) / 12 * taxConfig.rates[index - 1].rate / 100
+            s += (taxRate.min - taxConfig.rates[index - 1]!.min) / 12 * taxConfig.rates[index - 1]!.rate / 100
         }
         quickLookUpTable[index] = {
             quickDeduction: taxRate.min / 12 * (taxRate.rate / 100) - s,
@@ -41,7 +41,7 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
         }
         const netSalary = cSalaryInput.value;
         for (let i = 0; i < taxConfig.rates.length; i++) {
-            const lookupItem = quickLookUpTable[i];
+            const lookupItem = quickLookUpTable[i]!;
             const maxInsurane = (taxConfig.maxMonthlySocialInsuraneSalary * taxConfig.socialInsuranceRate / 100);
             const r = lookupItem.taxRate.rate / 100
             const q = lookupItem.quickDeduction
@@ -57,7 +57,7 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
                 }
             }
 
-            if (taxableSalary >= (taxConfig.rates[i].min / 12) && (i == taxConfig.rates.length - 1 || taxableSalary <= (taxConfig.rates[i + 1].min / 12))) {
+            if (taxableSalary >= (taxConfig.rates[i]!.min / 12) && (i == taxConfig.rates.length - 1 || taxableSalary <= (taxConfig.rates[i + 1]!.min / 12))) {
                 return Math.round(gross)
             }
         }

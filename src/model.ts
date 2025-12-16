@@ -48,6 +48,8 @@ export type IncomeInputForm = {
 export type ResultRow = {
     label: string;
     value: string;
+    tooltip?: string | false;
+    value_tooltip?: string | false;
     heading?: boolean;
     compare?: boolean;
     invertCompare?: boolean;

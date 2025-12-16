@@ -1,4 +1,4 @@
-import { TaxConfig } from "./model";
+import type { TaxConfig } from "./model";
 
 export const TaxConfig2025: TaxConfig = {
     monthlySelfReduce: 11000000,

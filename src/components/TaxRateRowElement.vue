@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { formatNumber } from '../libs/utils';
-import { TaxRateRow } from '../model';
+import type { TaxRateRow } from '../model';
 
 const _1M = 1000000;
 

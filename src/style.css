@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 /*
@@ -75,7 +76,6 @@
         --sidebar-border: oklch(1 0 0 / 10%);
         --sidebar-ring: oklch(0.439 0 0);
     }
-
 
     @theme inline {
         --color-border: var(--border);
@@ -172,5 +172,13 @@
     ::backdrop,
     ::file-selector-button {
         border-color: var(--color-gray-200, currentcolor);
+    }
+
+    * {
+        @apply border-border outline-ring/50;
+    }
+
+    body {
+        @apply bg-background text-foreground;
     }
 }

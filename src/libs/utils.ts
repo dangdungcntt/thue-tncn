@@ -1,4 +1,11 @@
-import { TaxRate } from "../model";
+import type { TaxRate } from "@/model";
+import type { ClassValue } from "clsx"
+import { clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs))
+}
 
 export function getTotalTax(rates: TaxRate[], taxSalary: number, mode: 'month' | 'year' = 'year') {
     let divide = 1;
@@ -7,7 +14,7 @@ export function getTotalTax(rates: TaxRate[], taxSalary: number, mode: 'month' |
     }
     let tax = 0;
     for (let i = rates.length - 1; i >= 0; i--) {
-        let rate = rates[i];
+        let rate = rates[i]!;
         const minSalary = rate.min / divide;
 
         if (taxSalary >= minSalary) {
