@@ -38,129 +38,55 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
 
     const minMonthSalary = computed(() => taxConfig.minMonthlySalaryByZone[state.zone]!)
 
+    function getActualInsurance(gross: number) {
+        const socialSalary = state.insuranceSalaryMode == 'custom' ? cInsuranceSalaryInput.value : Math.min(gross, taxConfig.maxMonthlySocialInsuraneSalary)
+        const employmentSalary = state.insuranceSalaryMode == 'custom' ? cInsuranceSalaryInput.value : Math.min(gross, taxConfig.employmentInsuranceFactor * minMonthSalary.value)
+        const { roundedTotal: actualInsurance } = useConstrainedCeiling([
+            socialSalary * taxConfig.socialInsurancePercent / 100,
+            socialSalary * taxConfig.healthInsurancePercent / 100,
+            employmentSalary * taxConfig.employmentInsurancePercent / 100,
+        ])
+        return actualInsurance;
+    }
+
     const grossSalary = computed(() => {
         if (state.salaryMode === 'gross') {
             return cSalaryInput.value;
         }
         const targetNet = cSalaryInput.value;
 
-        function tuneGross(gross: number, actualInsurance: number) {
-            const net = grossToNet(gross, totalDeduction.value, actualInsurance, taxConfig);
-
-            if (Math.ceil(net) != targetNet) {
-                gross += net < targetNet ? 1 : -1
-            }
-            return gross
+        if (targetNet < minMonthSalary.value) {
+            return targetNet;
         }
 
-        const ranges = [
-            {
-                min: 0, max: minMonthSalary.value, cal: function (): number {
-                    return targetNet
-                }
-            },
-            {
-                min: minMonthSalary.value, max: totalDeduction.value, cal: function (): number {
-                    // N = G - INS
-                    // G = N / (1- socialRate - healthRate - empRate)
-                    const insuranceRate = (taxConfig.socialInsurancePercent + taxConfig.healthInsurancePercent + taxConfig.employmentInsurancePercent) / 100
-                    let gross = Math.ceil(targetNet / (1 - insuranceRate));
-                    const actualInsurance = insuranceRate * gross;
-                    return tuneGross(gross, actualInsurance);
-                }
-            },
-            {
-                min: totalDeduction.value, max: taxConfig.maxMonthlySocialInsuraneSalary,
-                cal: function (): number {
-                    for (let i = 0; i < taxConfig.levels.length; i++) {
-                        const lookupItem = quickTaxLookUpTable[i]!;
-                        const socialInsurane = taxConfig.maxMonthlySocialInsuraneSalary * taxConfig.socialInsurancePercent / 100;
-                        const healthInsurane = taxConfig.maxMonthlySocialInsuraneSalary * taxConfig.healthInsurancePercent / 100;
+        function grossToNet(gross: number) {
+            const actualInsurance = getActualInsurance(gross)
+            const monthlyTaxSalary = Math.max(gross - totalDeduction.value - actualInsurance, 0)
+            return gross - Math.ceil(getTotalTax(taxConfig.levels, monthlyTaxSalary, 'month')) - Math.ceil(actualInsurance);
+        }
 
-                        const r = lookupItem.taxLevel.percent / 100
-                        const q = lookupItem.quickDeduction
-                        const D = totalDeduction.value
-                        // N = G - INS - Tax
-                        // TI = G - INS - D
-                        // Tax = r * TI - q
-                        // G = (N + SI + HI - r * (SI + HI + D) - q) / ((1 - empRate) * (1 - r))
-                        let gross = Math.ceil((targetNet + socialInsurane + healthInsurane - r * (socialInsurane + healthInsurane + D) - q) / ((1 - taxConfig.employmentInsurancePercent / 100) * (1 - r)));
+        let left = targetNet;
+        let right = targetNet * 3;
+        let gross = targetNet;
+        let step = 0;
 
-                        let actualInsurance = 0
-                        if (gross >= taxConfig.maxMonthlySocialInsuraneSalary) {
-                            actualInsurance = socialInsurane + healthInsurane + (taxConfig.employmentInsurancePercent / 100 * gross)
-                        } else {
-                            // G = (N - r * D - q) / ((1 - socialRate - healthRate - empRate) * (1 - r))
-                            const insuranceRate = (taxConfig.socialInsurancePercent + taxConfig.healthInsurancePercent + taxConfig.employmentInsurancePercent) / 100
-                            gross = Math.ceil((targetNet - r * D - q) / ((1 - insuranceRate) * (1 - r)));
-                            actualInsurance = insuranceRate * gross;
-                        }
+        while (left < right && step < 1000) {
+            step++;
+            gross = Math.round((left + right) / 2);
+            const net = grossToNet(gross);
 
-                        const taxableSalary = gross - actualInsurance - D
-
-                        if (taxableSalary >= (taxConfig.levels[i]!.min / 12) && (i == taxConfig.levels.length - 1 || taxableSalary <= (taxConfig.levels[i + 1]!.min / 12))) {
-                            return tuneGross(gross, actualInsurance);
-                        }
-                    }
-                    return 0
-                }
-            },
-            {
-                min: taxConfig.maxMonthlySocialInsuraneSalary,
-                cal: function (): number {
-                    for (let i = 0; i < taxConfig.levels.length; i++) {
-                        const lookupItem = quickTaxLookUpTable[i]!;
-                        const socialInsurane = taxConfig.maxMonthlySocialInsuraneSalary * taxConfig.socialInsurancePercent / 100;
-                        const healthInsurane = taxConfig.maxMonthlySocialInsuraneSalary * taxConfig.healthInsurancePercent / 100;
-                        const maxEmploymentInsuranceSalary = taxConfig.employmentInsuranceFactor * minMonthSalary.value;
-                        const employmentInsurance = maxEmploymentInsuranceSalary * taxConfig.employmentInsurancePercent / 100;
-                        const { roundedTotal: fullInsurance } = useConstrainedCeiling([
-                            socialInsurane,
-                            healthInsurane,
-                            employmentInsurance,
-                        ]);
-                        const r = lookupItem.taxLevel.percent / 100
-                        const q = lookupItem.quickDeduction
-                        const D = totalDeduction.value
-                        // N = G - INS - Tax
-                        // TI = G - INS - D
-                        // Tax = r * TI - q
-                        // G = (N + INS - r * (INS + D) - q) / (1 - r)
-                        let gross = Math.ceil((targetNet - r * (D + fullInsurance) + fullInsurance - q) / (1 - r));
-                        let taxableSalary = 0
-                        let actualInsurance = 0
-                        if (gross >= maxEmploymentInsuranceSalary) {
-                            actualInsurance = fullInsurance
-                            taxableSalary = gross - actualInsurance - D;
-                        } else {
-                            //G = (N + SI + HI - r * (SI + HI + D) - q) / ((1 - empRate) * (1 - r))
-                            gross = Math.ceil((targetNet + socialInsurane + healthInsurane - r * (socialInsurane + healthInsurane + D) - q) / ((1 - taxConfig.employmentInsurancePercent / 100) * (1 - r)));
-                            actualInsurance = (socialInsurane + healthInsurane + (taxConfig.employmentInsurancePercent / 100 * gross))
-                            taxableSalary = gross - actualInsurance - D
-                        }
-
-                        if (taxableSalary >= (taxConfig.levels[i]!.min / 12) && (i == taxConfig.levels.length - 1 || taxableSalary <= (taxConfig.levels[i + 1]!.min / 12))) {
-                            return tuneGross(gross, actualInsurance);
-                        }
-                    }
-
-                    return 0
-                }
-            },
-        ]
-        for (let j = 0; j < ranges.length; j++) {
-            const range = ranges[j]!;
-            if (targetNet < range.min || (!!range.max && targetNet > range.max)) {
-                continue;
+            if (net == targetNet) {
+                break
             }
 
-            const gross = range.cal();
-            if (gross > 0) {
-                return gross;
+            if (net < targetNet) {
+                left = gross
+            } else {
+                right = gross
             }
         }
 
-        return targetNet;
+        return gross;
     });
 
     const monthlySocialInsuranceSalary = computed(() => {
@@ -282,7 +208,4 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
     }
 }
 
-function grossToNet(gross: number, totalDeduction: number, insurance: number, taxConfig: TaxConfig) {
-    const monthlyTaxSalary = Math.max(gross - totalDeduction - insurance, 0)
-    return gross - Math.ceil(getTotalTax(taxConfig.levels, monthlyTaxSalary, 'month')) - Math.ceil(insurance);
-}
+
