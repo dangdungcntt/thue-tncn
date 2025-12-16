@@ -2,34 +2,29 @@
 import { reactive } from "vue";
 import { useIncomeCalculator } from "@/composables/income";
 import { TaxConfig2025, TaxConfig2026 } from "@/config";
-import type { IncomeInputForm } from "@/model";
-import CompareLabel from "@/components/CompareLabel.vue";
+import { SalaryInsuranceModes, Zones, type IncomeInputForm } from "@/model";
 import RuleText from "@/components/RuleText.vue";
-
-const maskaOption = reactive({
-  mask: "#,###,###,###,###,###,###",
-  reversed: true
-});
+import InfoTooltip from "@/components/InfoTooltip.vue";
+import MonthResultTable from "@/components/MonthResultTable.vue";
+import TaxLevelTable from "@/components/TaxLevelTable.vue";
+import InputCurrency from "@/components/InputCurrency.vue";
 
 const SalaryModes = [
   { label: 'Gross', value: 'gross' },
   { label: 'Net', value: 'net' }
 ];
-const InsuranceModes = [
-  { label: 'Toàn bộ lương', value: 'full' },
-  { label: 'Khác', value: 'custom' }
-];
 
 const state = reactive<IncomeInputForm>({
   salaryMode: 'net',
-  totalSalary: '50000000',
+  totalSalary: '',
   numberOfPeople: 0,
-  insuranceMode: 'full',
+  slaryForInsuranceMode: 'full',
   insuranceInput: '',
+  zone: 'I',
 });
 
-const { monthlyResultRows } = useIncomeCalculator(TaxConfig2025, state);
-const { monthlyResultRows: monthlyResultRows2026 } = useIncomeCalculator(TaxConfig2026, state);
+const { monthlyResultRows, monthlyTaxSalary } = useIncomeCalculator(TaxConfig2025, state);
+const { monthlyResultRows: monthlyResultRows2026, monthlyTaxSalary: monthlyTaxSalary2026 } = useIncomeCalculator(TaxConfig2026, state);
 
 </script>
 
@@ -38,9 +33,9 @@ const { monthlyResultRows: monthlyResultRows2026 } = useIncomeCalculator(TaxConf
   <RuleText />
 
   <div class="grid grid-cols-12 gap-5 md:gap-14">
-    <div class="col-span-12 lg:col-span-5">
+    <div class="col-span-12 lg:col-span-5 space-y-3">
       <h4 class="text-2xl font-medium my-2">Thông tin</h4>
-      <div class="mb-3">
+      <div>
         <div class="mb-2">
           <label>
             Thu nhập
@@ -52,62 +47,49 @@ const { monthlyResultRows: monthlyResultRows2026 } = useIncomeCalculator(TaxConf
             </label>
           </template>
         </div>
-        <input class="w-full border px-3 py-1 rounded-sm" v-model="state.totalSalary" v-maska:[maskaOption]
-          type="text" />
+        <InputCurrency v-model="state.totalSalary" />
       </div>
-      <div class="mb-3">
+      <div>
         <div class="mb-2">Số người phụ thuộc </div>
         <input class="w-full border px-3 py-1 rounded-sm" v-model="state.numberOfPeople" type="number">
       </div>
-      <div class="mb-3">
+      <div>
         <div class="mb-2">
           <label>
             Bảo hiểm
           </label>
-          <template v-for="insuranceMode in InsuranceModes" :key="insuranceMode.value">
+          <template v-for="mode in SalaryInsuranceModes" :key="mode.value">
             <label class="ml-2 mr-3">
-              <input v-model="state.insuranceMode" :value="insuranceMode.value" class="form-check-input" type="radio">
-              {{ insuranceMode.label }}
+              <input v-model="state.slaryForInsuranceMode" :value="mode.value" class="form-check-input" type="radio">
+              {{ mode.label }}
             </label>
           </template>
         </div>
-        <input v-if="state.insuranceMode === 'custom'" class="w-full border px-3 py-1 rounded-sm"
-          v-model="state.insuranceInput" v-maska:[maskaOption] type="text" />
+        <InputCurrency v-if="state.slaryForInsuranceMode === 'custom'" v-model="state.insuranceInput" />
       </div>
-      <hr class="my-6">
-      <h6 class="text-xl font-medium my-4">Thuế thu nhập cá nhân hàng tháng</h6>
-      <table class="border border-collapse w-full text-left">
-        <thead>
-          <tr>
-            <th class="border p-2"></th>
-            <th class="border p-2 text-center">
-              KQT 2025
-              <div class="text-xs font-normal">Tháng 3/2026</div>
-            </th>
-            <th class="border p-2 text-center">
-              KQT 2026
-              <div class="text-xs font-normal">Tháng 3/2027</div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(row, i) in monthlyResultRows" :key="i" class="hover:bg-gray-200"
-            :class="{ 'bg-gray-100': i % 2 == 0 }">
-            <td class="border p-2" :class="{ 'font-semibold': row.heading }">{{ row.label }}</td>
-            <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
-              <div v-if="row.compare">&nbsp;</div>
-              {{ row.value }}
-            </td>
-            <td class="border p-2 text-end" :class="{ 'font-semibold': row.heading }">
-              <div v-if="row.compare">
-                <CompareLabel :left="row.value" :right="monthlyResultRows2026[i]!.value" :inverse="row.invertCompare" />
-              </div>
-
-              {{ monthlyResultRows2026[i]!.value }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div>
+        <label>
+          Vùng
+          <InfoTooltip tooltip="Dùng để tính trần BHTN" />
+        </label>
+        <template v-for="zone in Zones" :key="zone">
+          <label class="ml-2 mr-3">
+            <input v-model="state.zone" :value="zone" class="form-check-input" type="radio">
+            {{ zone }}
+          </label>
+        </template>
+      </div>
     </div>
+    <div class="col-span-12 lg:col-span-7">
+      <hr class="my-6 lg:hidden">
+      <h6 class="text-xl font-medium my-4">Thuế thu nhập cá nhân hàng tháng</h6>
+      <MonthResultTable :monthly-result-rows="monthlyResultRows" :monthly-result-rows-2026="monthlyResultRows2026" />
+    </div>
+  </div>
+  <div>
+    <hr class="mt-6">
+    <h6 class="text-xl font-medium my-4">Bảng thuế suất thuế thu nhập cá nhân
+    </h6>
+    <TaxLevelTable :monthly-tax-salary="monthlyTaxSalary" :monthly-tax-salary2026="monthlyTaxSalary2026" />
   </div>
 </template>

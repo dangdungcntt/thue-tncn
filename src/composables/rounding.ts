@@ -4,11 +4,11 @@ export interface ConstrainedRoundingResult {
 }
 
 /**
- * Constrained rounding:
- * - Total is rounded normally
- * - Items are rounded so that their sum equals the rounded total
+ * Constrained ceiling:
+ * - Total is ceiled normally
+ * - Items are rounded so that their sum equals the ceiling total
  */
-export function useConstrainedRounding(
+export function useConstrainedCeiling(
     values: number[],
     options?: {
         precision?: number   // default: 0 (integer)
@@ -23,7 +23,7 @@ export function useConstrainedRounding(
 
     // 2. Round total
     const rawTotal = scaled.reduce((a, b) => a + b, 0)
-    const roundedTotal = Math.round(rawTotal)
+    const roundedTotal = Math.ceil(rawTotal)
 
     // 3. Floor each item
     const floors = scaled.map(v => Math.floor(v))
@@ -48,7 +48,7 @@ export function useConstrainedRounding(
 
         // 7. Distribute remainder
         for (let i = 0; i < delta; i++) {
-            floors[fractions[i].index] += 1
+            floors[fractions[i]!.index]! += 1
         }
     }
 

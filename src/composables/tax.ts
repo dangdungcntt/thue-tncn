@@ -1,7 +1,7 @@
 import { computed, type MaybeRefOrGetter, type Reactive, toValue } from "vue";
-import type { TaxInputForm, ResultRow, TaxConfig, TaxRateRow } from "../model";
-import { formatNumber, getTaxRateValue, getTotalTax } from "../libs/utils";
-import { useConstrainedRounding } from "./rounding";
+import type { TaxInputForm, ResultRow, TaxConfig, TaxLevelRow, TaxLevel } from "../model";
+import { formatNumber, getTaxLevelValue, getTotalTax } from "../libs/utils";
+import { useConstrainedCeiling } from "./rounding";
 
 export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputForm>) {
     const cTotalSalary = computed(() => {
@@ -25,7 +25,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
     });
 
     const peopleReduceSalary = computed(() => {
-        return state.numberOfPeople * taxConfig.monthlyPeopleReduce * 12;
+        return Math.max(0, state.numberOfPeople) * taxConfig.monthlyPeopleReduce * 12;
     });
 
     const totalReduceSalary = computed(() => {
@@ -34,7 +34,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
 
     const payedInsurance = computed(() => {
         if (state.insuranceMode === 'salary') {
-            return Math.round(cInsuranceInput.value * 12 * (taxConfig.socialInsuranceRate + taxConfig.healthInsuranceRate + taxConfig.employmentInsuranceRate) / 100);
+            return Math.round(cInsuranceInput.value * 12 * (taxConfig.socialInsurancePercent + taxConfig.healthInsurancePercent + taxConfig.employmentInsurancePercent) / 100);
         }
         return cInsuranceInput.value;
     });
@@ -44,7 +44,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
     });
 
     const totalTax = computed(() => {
-        return Math.ceil(getTotalTax(taxConfig.rates, taxSalary.value, 'year'));
+        return Math.ceil(getTotalTax(taxConfig.levels, taxSalary.value, 'year'));
     });
 
     const remainingTax = computed(() => {
@@ -66,10 +66,10 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
     });
 
     const monthlyInsurance = computed(() => {
-        const { roundedItems, roundedTotal } = useConstrainedRounding([
-            monthlySocialInsuranceSalary.value * taxConfig.socialInsuranceRate / 100,
-            monthlySocialInsuranceSalary.value * taxConfig.healthInsuranceRate / 100,
-            monthlyEmploymentInsuranceSalary.value * taxConfig.employmentInsuranceRate / 100,
+        const { roundedItems, roundedTotal } = useConstrainedCeiling([
+            monthlySocialInsuranceSalary.value * taxConfig.socialInsurancePercent / 100,
+            monthlySocialInsuranceSalary.value * taxConfig.healthInsurancePercent / 100,
+            monthlyEmploymentInsuranceSalary.value * taxConfig.employmentInsurancePercent / 100,
         ])
         return {
             socialInsurance: roundedItems[0] as number,
@@ -142,12 +142,12 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
     });
 
     const monthlyResultRows = computed<ResultRow[]>(() => {
-        const monthlyTax = Math.ceil(getTotalTax(taxConfig.rates, monthlyTaxSalary.value, 'month'));
+        const monthlyTax = Math.ceil(getTotalTax(taxConfig.levels, monthlyTaxSalary.value, 'month'));
         const isMaxSocialInsurance = monthlySocialInsuranceSalary.value == taxConfig.maxMonthlySocialInsuraneSalary
         const isMaxEmploymentInsurance = monthlyEmploymentInsuranceSalary.value == taxConfig.employmentInsuranceFactor * taxConfig.minMonthlySalaryByZone[state.zone]
         return [
             {
-                label: 'Thu nhập (1)',
+                label: 'Thu nhập - GROSS (1)',
                 value: formatNumber(cTotalSalary.value),
                 heading: true,
             },
@@ -171,17 +171,17 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
                 heading: true,
             },
             {
-                label: `BHXH (${taxConfig.socialInsuranceRate}%)`,
+                label: `BHXH (${taxConfig.socialInsurancePercent}%)`,
                 tooltip: isMaxSocialInsurance && `Trần BHXH: ${formatNumber(monthlySocialInsuranceSalary.value)}đ`,
                 value: formatNumber(monthlyInsurance.value.socialInsurance),
             },
             {
-                label: `BHYT (${taxConfig.healthInsuranceRate}%)`,
+                label: `BHYT (${taxConfig.healthInsurancePercent}%)`,
                 tooltip: isMaxSocialInsurance && `Trần BHYT: ${formatNumber(monthlySocialInsuranceSalary.value)}đ`,
                 value: formatNumber(monthlyInsurance.value.healthInsurance),
             },
             {
-                label: `BHTN (${taxConfig.employmentInsuranceRate}%)`,
+                label: `BHTN (${taxConfig.employmentInsurancePercent}%)`,
                 value_tooltip: isMaxEmploymentInsurance && `Trần BHTN: ${formatNumber(monthlyEmploymentInsuranceSalary.value)}đ`,
                 value: formatNumber(monthlyInsurance.value.employmentInsurance),
             },
@@ -200,7 +200,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
                 invertCompare: true,
             },
             {
-                label: 'Thực nhận (6) = (1) - (3) - (5)',
+                label: 'Thực nhận - NET (6) = (1) - (3) - (5)',
                 value: formatNumber(cTotalSalary.value - monthlyTax - monthlyInsurance.value.total),
                 heading: true,
                 compare: true,
@@ -216,26 +216,26 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
 }
 
 
-export function useTaxRateRows(taxConfig: TaxConfig, monthlyTaxSalary: MaybeRefOrGetter<number>) {
-    const taxRateRows = computed(() => {
-        const rows: TaxRateRow[] = []
+export function useTaxLevelRows(taxConfig: TaxConfig, monthlyTaxSalary: MaybeRefOrGetter<number>) {
+    const taxLevelRows = computed(() => {
+        const rows: TaxLevelRow[] = []
         const mTaxSalary = toValue(monthlyTaxSalary);
 
-        for (let i = 0; i < taxConfig.rates.length; i++) {
-            const rateWithMax = {
-                min: taxConfig.rates[i]!.min,
-                rate: taxConfig.rates[i]!.rate,
-                max: i < taxConfig.rates.length - 1 ? taxConfig.rates[i + 1]!.min : 0
+        for (let i = 0; i < taxConfig.levels.length; i++) {
+            const levelWithMax: TaxLevel = {
+                min: taxConfig.levels[i]!.min,
+                percent: taxConfig.levels[i]!.percent,
+                max: i < taxConfig.levels.length - 1 ? taxConfig.levels[i + 1]!.min : 0
             };
             rows.push({
-                taxRate: rateWithMax,
-                monthlyTaxValue: getTaxRateValue(rateWithMax, mTaxSalary)
+                taxLevel: levelWithMax,
+                monthlyTaxValue: Math.ceil(getTaxLevelValue(levelWithMax, mTaxSalary)),
             });
         }
         return rows;
     });
 
     return {
-        taxRateRows
+        taxLevelRows
     }
 }

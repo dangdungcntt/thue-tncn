@@ -1,22 +1,22 @@
-export interface TaxRate {
+export interface TaxLevel {
     min: number
     max?: number
-    rate: number
+    percent: number
 }
 
-export interface TaxRateRow {
-    taxRate: TaxRate
+export interface TaxLevelRow {
+    taxLevel: TaxLevel
     monthlyTaxValue?: number
 }
 
 export type TaxConfig = {
     monthlySelfReduce: number
     monthlyPeopleReduce: number
-    socialInsuranceRate: number
-    healthInsuranceRate: number
-    employmentInsuranceRate: number
+    socialInsurancePercent: number
+    healthInsurancePercent: number
+    employmentInsurancePercent: number
     maxMonthlySocialInsuraneSalary: number
-    rates: TaxRate[]
+    levels: TaxLevel[]
     employmentInsuranceFactor: number
     minMonthlySalaryByZone: {
         I: number,
@@ -41,8 +41,9 @@ export type IncomeInputForm = {
     salaryMode: 'gross' | 'net';
     totalSalary: string;
     numberOfPeople: number;
-    insuranceMode: 'full' | 'custom',
+    slaryForInsuranceMode: 'full' | 'custom',
     insuranceInput: string,
+    zone: 'I' | 'II' | 'III' | 'IV'
 }
 
 export type ResultRow = {
@@ -54,3 +55,9 @@ export type ResultRow = {
     compare?: boolean;
     invertCompare?: boolean;
 }
+
+export const SalaryInsuranceModes = [
+    { label: 'Toàn bộ lương', value: 'full' },
+    { label: 'Khác', value: 'custom' }
+];
+export const Zones = ["I", "II", "III", "IV"]
