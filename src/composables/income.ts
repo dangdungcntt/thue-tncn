@@ -65,6 +65,21 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
             return gross - Math.ceil(getTotalTax(taxConfig.levels, monthlyTaxSalary, 'month')) - Math.ceil(actualInsurance);
         }
 
+        function tuneGross(gross: number) {
+            let net
+            let step = 0
+            do {
+                step++
+                net = grossToNet(gross);
+
+                if (Math.ceil(net) != targetNet) {
+                    gross += net < targetNet ? 1 : -1
+                }
+            } while (net != targetNet && step < 1000);
+
+            return gross;
+        }
+
         let left = targetNet;
         let right = targetNet * 3;
         let gross = targetNet;
@@ -75,7 +90,7 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
             gross = Math.round((left + right) / 2);
             const net = grossToNet(gross);
 
-            if (net == targetNet) {
+            if (Math.abs(net - targetNet) < 3) {
                 break
             }
 
@@ -86,7 +101,7 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
             }
         }
 
-        return gross;
+        return tuneGross(gross);
     });
 
     const monthlySocialInsuranceSalary = computed(() => {
