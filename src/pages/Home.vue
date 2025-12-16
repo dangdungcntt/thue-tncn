@@ -17,7 +17,7 @@ const SalaryModes = [
 
 const state = reactive<TaxInputForm>({
   salaryMode: 'month',
-  salaryInput: '63000000',
+  salaryInput: '',
   numberOfDependent: 0,
   insuranceMode: 'salary',
   insuranceSlaryMode: 'full',
