@@ -4,7 +4,7 @@ import { formatNumber, getTotalTax } from "@/libs/utils";
 import { useConstrainedCeiling } from "./rounding";
 
 export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<IncomeInputForm>) {
-    const cSalaryInput = computed(() => {
+    const cInput = computed(() => {
         return Math.max(Number(state.salaryInput.replace(/,/g, '')), 0);
     });
 
@@ -13,7 +13,7 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
     });
 
     const dependentDeduction = computed(() => {
-        return Math.max(0, state.numberOfDependent) * taxConfig.monthlyDependentDeduction;
+        return Math.max(0, state.numberOfDependent || 0) * taxConfig.monthlyDependentDeduction;
     });
 
     const totalDeduction = computed(() => {
@@ -50,13 +50,8 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
     }
 
     const grossSalary = computed(() => {
-        if (state.salaryMode === 'gross') {
-            return cSalaryInput.value;
-        }
-        const targetNet = cSalaryInput.value;
-
-        if (targetNet < minMonthSalary.value) {
-            return targetNet;
+        if (state.inputMode === 'gross') {
+            return cInput.value;
         }
 
         function grossToNet(gross: number) {
@@ -65,36 +60,47 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
             return gross - Math.ceil(getTotalTax(taxConfig.levels, monthlyTaxSalary, 'month')) - Math.ceil(actualInsurance);
         }
 
+        function grossToTax(gross: number) {
+            const actualInsurance = getActualInsurance(gross)
+            const monthlyTaxSalary = Math.max(gross - totalDeduction.value - actualInsurance, 0)
+            return Math.ceil(getTotalTax(taxConfig.levels, monthlyTaxSalary, 'month'))
+        }
+        const targetValue = cInput.value;
+        const converter = state.inputMode === 'tax' ? grossToTax : grossToNet;
+
         function tuneGross(gross: number) {
-            let net
+            let actual
             let step = 0
             do {
                 step++
-                net = grossToNet(gross);
+                actual = converter(gross);
 
-                if (Math.ceil(net) != targetNet) {
-                    gross += net < targetNet ? 1 : -1
+                if (Math.ceil(actual) != targetValue) {
+                    gross += actual < targetValue ? 1 : -1
                 }
-            } while (net != targetNet && step < 1000);
+            } while (actual != targetValue && step < 1000);
 
             return gross;
         }
 
-        let left = targetNet;
-        let right = targetNet * 3;
-        let gross = targetNet;
+        let left, right
         let step = 0;
+        let gross = 0;
+        if (state.inputMode == 'tax') {
+            left = 0
+            right = Math.max(targetValue * 50, 50_000_000)
+        } else {
+            // net
+            left = targetValue;
+            right = targetValue * 3;
+        }
 
         while (left < right && step < 1000) {
             step++;
             gross = Math.round((left + right) / 2);
-            const net = grossToNet(gross);
+            const actual = converter(gross);
 
-            if (Math.abs(net - targetNet) < 3) {
-                break
-            }
-
-            if (net < targetNet) {
+            if (actual <= targetValue) {
                 left = gross
             } else {
                 right = gross
@@ -152,10 +158,10 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
         const isMaxEmploymentInsurance = monthlyEmploymentInsuranceSalary.value == taxConfig.employmentInsuranceFactor * minMonthSalary.value
         return [
             {
-                label: 'Thu nhập - GROSS (1)',
+                label: 'Thu nhập (GROSS) (1)',
                 value: formatNumber(grossSalary.value),
                 heading: true,
-                compare: state.salaryMode === 'net',
+                compare: state.inputMode !== 'gross',
             },
             {
                 label: 'Giảm trừ gia cảnh (2)',
@@ -202,21 +208,21 @@ export function useIncomeCalculator(taxConfig: TaxConfig, state: Reactive<Income
                 label: 'Thuế phải đóng (5) = Thuế suất x (4)',
                 value: formatNumber(tax),
                 heading: true,
-                compare: true,
+                compare: state.inputMode !== 'tax',
                 invertCompare: true,
             },
             {
-                label: 'Thực nhận - NET (6) = (1) - (3) - (5)',
+                label: 'Thực nhận (NET) (6) = (1) - (3) - (5)',
                 value: formatNumber(netSalary.value),
                 heading: true,
-                compare: state.salaryMode === 'gross',
+                compare: state.inputMode !== 'net',
             },
         ];
     });
 
 
     return {
-        cSalaryInput,
+        cSalaryInput: cInput,
         cInsuranceInput: cInsuranceSalaryInput,
         monthlyTaxSalary,
         monthlyResultRows,

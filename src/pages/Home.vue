@@ -9,6 +9,9 @@ import InputCurrency from "@/components/InputCurrency.vue";
 import RuleText from "@/components/RuleText.vue";
 import InfoTooltip from "@/components/InfoTooltip.vue";
 import MonthResultTable from "@/components/MonthResultTable.vue";
+import RadioItems from "@/components/RadioItems.vue";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 const SalaryModes = [
   { label: 'Theo tháng', value: 'month' },
@@ -20,7 +23,7 @@ const state = reactive<TaxInputForm>({
   salaryInput: '',
   numberOfDependent: 0,
   insuranceMode: 'salary',
-  insuranceSlaryMode: 'full',
+  insuranceSalaryMode: 'full',
   insuranceInput: '',
   payedTaxInput: '',
   zone: 'I',
@@ -81,58 +84,38 @@ function getRowSpan(index: number) {
   <RuleText />
 
   <div class="grid grid-cols-12 gap-5 md:gap-14">
-    <div class="col-span-12 lg:col-span-5 space-y-3">
+    <div class="col-span-12 lg:col-span-5 space-y-4">
       <h4 class="text-2xl font-medium my-2">Thông tin</h4>
-      <div>
-        <div class="mb-2">
-          <label>
+      <div class="space-y-2">
+        <div class="flex gap-3">
+          <Label>
             Thu nhập
-          </label>
-          <template v-for="salaryMode in SalaryModes" :key="salaryMode.value">
-            <label class="ml-2 mr-3">
-              <input v-model="state.salaryMode" :value="salaryMode.value" class="form-check-input" type="radio">
-              {{ salaryMode.label }}
-            </label>
-          </template>
+          </Label>
+          <RadioItems v-model="state.salaryMode" :items="SalaryModes" />
         </div>
         <InputCurrency v-model="state.salaryInput" />
       </div>
-      <div>
-        <div class="mb-2">Số người phụ thuộc </div>
-        <input class="w-full border px-3 py-1 rounded-sm" v-model="state.numberOfDependent" type="number">
+      <div class="space-y-2">
+        <Label>Số người phụ thuộc </Label>
+        <Input v-model="state.numberOfDependent" type="number" />
       </div>
       <div class="space-y-2">
-        <div>
-          <label>
+        <div class="flex gap-3">
+          <Label>
             Bảo hiểm
-          </label>
-          <template v-if="InsuranceModes.length" v-for="insuranceMode in InsuranceModes" :key="insuranceMode.value">
-            <label class="ml-2 mr-3">
-              <input v-model="state.insuranceMode" :value="insuranceMode.value" class="form-check-input" type="radio">
-              {{ insuranceMode.label }}
-            </label>
-          </template>
-          <label v-if="showMonthlyTax" v-for="mode in SalaryInsuranceModes" :key="mode.value" class="ml-2 mr-3">
-            <input v-model="state.insuranceSlaryMode" :value="mode.value" class="form-check-input" type="radio">
-            {{ mode.label }}
-          </label>
-        </div>
-        <div>
+          </Label>
 
+          <RadioItems v-if="InsuranceModes.length" v-model="state.insuranceMode" :items="InsuranceModes" />
+          <RadioItems v-if="showMonthlyTax" v-model="state.insuranceSalaryMode" :items="SalaryInsuranceModes" />
         </div>
-        <InputCurrency v-if="!showMonthlyTax || state.insuranceSlaryMode == 'custom'" v-model="state.insuranceInput" />
+        <InputCurrency v-if="!showMonthlyTax || state.insuranceSalaryMode == 'custom'" v-model="state.insuranceInput" />
       </div>
-      <div v-if="showMonthlyTax">
-        <label>
+      <div v-if="showMonthlyTax" class="flex gap-3">
+        <Label>
           Vùng
           <InfoTooltip tooltip="Dùng để tính trần BHTN" />
-        </label>
-        <template v-for="zone in Zones" :key="zone">
-          <label class="ml-2 mr-3">
-            <input v-model="state.zone" :value="zone" class="form-check-input" type="radio">
-            {{ zone }}
-          </label>
-        </template>
+        </Label>
+        <RadioItems v-model="state.zone" :items="Zones" />
       </div>
       <div>
         <div class="mb-2">
@@ -186,7 +169,7 @@ function getRowSpan(index: number) {
     <h6 class="text-xl font-medium my-4">Bảng thuế suất thuế thu nhập cá nhân
     </h6>
     <div class="relative overflow-x-auto rounded-base border border-default">
-      <table class="text-left w-full min-w-[900px]">
+      <table class="text-left w-full min-w-225">
         <thead class="bg-neutral-secondary-soft border-b border-default text-center">
           <tr class="border-b border-default">
             <th class="p-2 border-r" colspan="4">Hiện hành</th>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from './ui/input-group';
+
 const model = defineModel();
 
 const maskaOption = {
@@ -8,5 +10,10 @@ const maskaOption = {
 
 </script>
 <template>
-  <input class="w-full border px-3 py-1 rounded-sm" v-model="model" v-maska:[maskaOption] type="text" />
+  <InputGroup>
+    <InputGroupInput placeholder="0" v-model="model" v-maska:[maskaOption] />
+    <InputGroupAddon align="inline-end">
+      <InputGroupText>VND</InputGroupText>
+    </InputGroupAddon>
+  </InputGroup>
 </template>

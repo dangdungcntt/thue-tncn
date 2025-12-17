@@ -26,24 +26,26 @@ export type TaxConfig = {
     }
 }
 
+export type Zone = 'I' | 'II' | 'III' | 'IV'
+
 export type TaxInputForm = {
     salaryMode: string;
     salaryInput: string;
     numberOfDependent: number;
     insuranceMode: 'salary' | 'payed',
-    insuranceSlaryMode: 'full' | 'custom',
+    insuranceSalaryMode: 'full' | 'custom',
     insuranceInput: string,
     payedTaxInput: string
-    zone: 'I' | 'II' | 'III' | 'IV'
+    zone: Zone
 }
 
 export type IncomeInputForm = {
-    salaryMode: 'gross' | 'net';
+    inputMode: 'gross' | 'net' | 'tax';
     salaryInput: string;
     numberOfDependent: number;
     insuranceSalaryMode: 'full' | 'custom',
     insuranceSalaryInput: string,
-    zone: 'I' | 'II' | 'III' | 'IV'
+    zone: Zone
 }
 
 export type ResultRow = {
@@ -60,4 +62,4 @@ export const SalaryInsuranceModes = [
     { label: 'Toàn bộ lương', value: 'full' },
     { label: 'Khác', value: 'custom' }
 ];
-export const Zones = ["I", "II", "III", "IV"]
+export const Zones: { label: string, value: Zone }[] = [{ label: "I", value: "I" }, { label: "II", value: "II" }, { label: "III", value: "III" }, { label: "IV", value: "IV" }]

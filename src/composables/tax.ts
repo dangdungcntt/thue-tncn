@@ -25,7 +25,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
     });
 
     const dependentDeduction = computed(() => {
-        return Math.max(0, state.numberOfDependent) * taxConfig.monthlyDependentDeduction * 12;
+        return Math.max(0, state.numberOfDependent || 0) * taxConfig.monthlyDependentDeduction * 12;
     });
 
     const totalDeduction = computed(() => {
@@ -52,14 +52,14 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
     });
 
     const monthlySocialInsuranceSalary = computed(() => {
-        if (state.insuranceSlaryMode == 'custom') {
+        if (state.insuranceSalaryMode == 'custom') {
             return cInsuranceInput.value
         }
         return Math.min(taxConfig.maxMonthlySocialInsuraneSalary, cSalaryInput.value);
     });
 
     const monthlyEmploymentInsuranceSalary = computed(() => {
-        if (state.insuranceSlaryMode == 'custom') {
+        if (state.insuranceSalaryMode == 'custom') {
             return cInsuranceInput.value
         }
         return Math.min(taxConfig.employmentInsuranceFactor * taxConfig.minMonthlySalaryByZone[state.zone], cSalaryInput.value);
@@ -147,7 +147,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
         const isMaxEmploymentInsurance = monthlyEmploymentInsuranceSalary.value == taxConfig.employmentInsuranceFactor * taxConfig.minMonthlySalaryByZone[state.zone]
         return [
             {
-                label: 'Thu nhập - GROSS (1)',
+                label: 'Thu nhập (Gross) (1)',
                 value: formatNumber(cSalaryInput.value),
                 heading: true,
             },
@@ -200,7 +200,7 @@ export function useTaxCalculator(taxConfig: TaxConfig, state: Reactive<TaxInputF
                 invertCompare: true,
             },
             {
-                label: 'Thực nhận - NET (6) = (1) - (3) - (5)',
+                label: 'Thực nhận (Net) (6) = (1) - (3) - (5)',
                 value: formatNumber(cSalaryInput.value - monthlyTax - monthlyInsurance.value.total),
                 heading: true,
                 compare: true,

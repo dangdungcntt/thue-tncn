@@ -40,7 +40,7 @@ function getRowSpan(index: number) {
 </script>
 <template>
   <div class="relative overflow-x-auto rounded-base border border-default">
-    <table class="text-left w-full min-w-[900px]">
+    <table class="text-left w-full min-w-225">
       <thead class="bg-neutral-secondary-soft border-b border-default text-center">
         <tr class="border-b border-default">
           <th class="p-2 border-r" colspan="4">Hiện hành</th>

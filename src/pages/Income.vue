@@ -4,18 +4,22 @@ import { useIncomeCalculator } from "@/composables/income";
 import { TaxConfig2025, TaxConfig2026 } from "@/config";
 import { SalaryInsuranceModes, Zones, type IncomeInputForm } from "@/model";
 import RuleText from "@/components/RuleText.vue";
-import InfoTooltip from "@/components/InfoTooltip.vue";
 import MonthResultTable from "@/components/MonthResultTable.vue";
 import TaxLevelTable from "@/components/TaxLevelTable.vue";
 import InputCurrency from "@/components/InputCurrency.vue";
+import RadioItems from "@/components/RadioItems.vue";
+import MinSalaryTable from "@/components/MinSalaryTable.vue";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
-const SalaryModes = [
+const InputModes = [
   { label: 'Gross', value: 'gross' },
-  { label: 'Net', value: 'net' }
+  { label: 'Net', value: 'net' },
+  { label: 'Thuế phải đóng', value: 'tax' },
 ];
 
 const state = reactive<IncomeInputForm>({
-  salaryMode: 'net',
+  inputMode: 'net',
   salaryInput: '',
   numberOfDependent: 0,
   insuranceSalaryMode: 'full',
@@ -33,55 +37,44 @@ const { monthlyResultRows: monthlyResultRows2026, monthlyTaxSalary: monthlyTaxSa
   <RuleText />
 
   <div class="grid grid-cols-12 gap-5 md:gap-14">
-    <div class="col-span-12 lg:col-span-5 space-y-3">
+    <div class="col-span-12 lg:col-span-5 space-y-4">
       <h4 class="text-2xl font-medium my-2">Thông tin</h4>
-      <div>
-        <div class="mb-2">
-          <label>
-            Thu nhập
-          </label>
-          <template v-for="salaryMode in SalaryModes" :key="salaryMode.value">
-            <label class="ml-2 mr-3">
-              <input v-model="state.salaryMode" :value="salaryMode.value" class="form-check-input" type="radio">
-              {{ salaryMode.label }}
-            </label>
-          </template>
+      <div class="space-y-2">
+        <div class="flex gap-3">
+          <Label>
+            Số tiền
+          </Label>
+          <RadioItems v-model="state.inputMode" :items="InputModes" />
         </div>
         <InputCurrency v-model="state.salaryInput" />
       </div>
-      <div>
-        <div class="mb-2">Số người phụ thuộc </div>
-        <input class="w-full border px-3 py-1 rounded-sm" v-model="state.numberOfDependent" type="number">
+      <div class="space-y-2">
+        <Label>Số người phụ thuộc </Label>
+        <Input v-model="state.numberOfDependent" type="number" />
       </div>
-      <div>
-        <div class="mb-2">
-          <label>
+      <div class="space-y-2">
+        <div class="flex gap-3">
+          <Label>
             Bảo hiểm
-          </label>
-          <template v-for="mode in SalaryInsuranceModes" :key="mode.value">
-            <label class="ml-2 mr-3">
-              <input v-model="state.insuranceSalaryMode" :value="mode.value" class="form-check-input" type="radio">
-              {{ mode.label }}
-            </label>
-          </template>
+          </Label>
+          <RadioItems v-model="state.insuranceSalaryMode" :items="SalaryInsuranceModes" />
         </div>
         <InputCurrency v-if="state.insuranceSalaryMode === 'custom'" v-model="state.insuranceSalaryInput" />
       </div>
-      <div>
-        <label>
+      <div class="flex gap-3">
+        <Label>
           Vùng
-          <InfoTooltip tooltip="Dùng để tính trần BHTN" />
-        </label>
-        <template v-for="zone in Zones" :key="zone">
-          <label class="ml-2 mr-3">
-            <input v-model="state.zone" :value="zone" class="form-check-input" type="radio">
-            {{ zone }}
-          </label>
-        </template>
+        </Label>
+        <RadioItems v-model="state.zone" :items="Zones" />
+      </div>
+      <div class="my-6 hidden lg:block">
+        <h6 class="text-xl font-medium my-4">Bảng lương tối thiểu vùng</h6>
+        <div class="italic mb-2">Dùng làm căn cứ xác định mức đóng BHTN tối đa.</div>
+        <MinSalaryTable />
       </div>
     </div>
     <div class="col-span-12 lg:col-span-7">
-      <hr class="my-6 lg:hidden">
+      <hr class="my-4 lg:hidden">
       <h6 class="text-xl font-medium my-4">Thuế thu nhập cá nhân hàng tháng</h6>
       <MonthResultTable :monthly-result-rows="monthlyResultRows" :monthly-result-rows-2026="monthlyResultRows2026" />
     </div>
