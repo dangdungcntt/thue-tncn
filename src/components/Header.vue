@@ -12,8 +12,9 @@ const showMenu = ref(false);
   <header
     class="flex items-center justify-between px-6 py-3 md:py-4 shadow max-w-5xl rounded-full mx-auto w-full bg-white">
 
-    <router-link to="/">
-      TNCN - NDDAPP
+    <router-link to="/" class="flex items-center gap-3">
+      <img src="/favicon-96x96.png" alt="logo" class="size-8">
+      <span class="font-semibold">TNCN - NDDAPP</span>
     </router-link>
 
     <nav id="menu"
