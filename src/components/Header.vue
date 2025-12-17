@@ -18,7 +18,7 @@ const showMenu = ref(false);
     </router-link>
 
     <nav id="menu"
-      class="max-md:absolute max-md:top-0 max-md:left-0 max-md:overflow-hidden items-center justify-center max-md:h-full transition-[width] bg-white/50 backdrop-blur flex-col md:flex-row flex gap-8 text-gray-900 text-sm font-normal"
+      class="max-md:absolute max-md:top-0 max-md:left-0 max-md:overflow-hidden items-center justify-center max-md:h-full transition-[width] bg-white/50 backdrop-blur flex-col md:flex-row flex gap-8 text-gray-900 text-sm font-normal z-1"
       :class="{ 'max-md:w-0': !showMenu, 'max-md:w-full': showMenu }">
 
       <router-link v-for="link in links" :key="link.href" :to="link.href" class="hover:text-indigo-600"

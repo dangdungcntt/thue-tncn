@@ -117,9 +117,9 @@ function getRowSpan(index: number) {
         </Label>
         <RadioItems v-model="state.zone" :items="Zones" />
       </div>
-      <div>
-        <div class="mb-2">
-          <label>Thuế đã khấu trừ</label>
+      <div class="space-y-2">
+        <div>
+          <Label>Thuế đã khấu trừ</Label>
         </div>
         <InputCurrency v-model="state.payedTaxInput" />
       </div>
